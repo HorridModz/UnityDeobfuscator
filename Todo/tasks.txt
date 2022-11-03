@@ -1,0 +1,7 @@
+1. Copy python code
+2. Remove unnecessary python code
+3. Refactor python code and add comments
+4. Group refactored code into hierarchy of classes and files
+5. Make python code statically typed
+6. Port python code to c++
+7. Diagnose and optimize c++ code
