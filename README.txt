@@ -15,4 +15,4 @@ Features:
 -Flexible options
 -Force unity version, or it can be auto-detected
 -Deobfuscate everything, only one dll / method / class / namespace etc., or specify certain dll > namespace > class > method paths, subpaths (like all classes in blank namespace), regex, name, charset, etc. 
--Dnspy-style viewer for selecting paths etc. 
+-Dnspy-style viewer for selecting paths etc.
