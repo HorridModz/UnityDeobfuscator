@@ -1,0 +1,70 @@
+class a : b = derived class (CURRENT NAME IS SHARED CLASS MUST CHANGE)
+
+struct, class, interface, enum = object type (CURRENT NAME IS USER-DEFINED TYPE MUST CHANGE)
+
+"public" in "public class classname" = type (CURRENT NAME IS OBJECT TYPE MUST CHANGE)
+
+readonly / public / abstract / const / bool / object int[] / char* etc.
+= primitive type (Simple types and complex types) (CURRENT NAME IS TYPE MUST CHANGE)
+
+Dictionary / Vector3 / Quaternion etc. = unity type
+
+PhotonNetworkingMessage / Color (any user-defined type not defined by Unity) = user-defined type
+
+Content of // Methods = methods
+Content of "/* GenericInstMethod :" = genericintsmethods
+Content of // Fields = fields
+Content of // Properties = properties
+
+List<string>, Dictionary<bool,int> etc. = generic (CURRENT NAME IS DATA TYPE GROUP MUST CHANGE)
+"{ get; set}" in "public static int propety { get; set}" = property method (CURRENT NAME IS PROPERTY ATTRIBUTE MUST CHANGE)
+
+// RVA: 0x1 Offset: 0x1 VA: 0x1 = offset string
+// 0x1 = field offset string
+"1" in "internal int field = 1 // 0x1" = field value (if none, it is set to None)
+0x1 = offset  (if none, it is set to None)
+
+"int i = 1" in "function(int i = 1)" or "int a" in "function(int a,bool b=true)" = parameter / param
+"1" in "function(int i = 1)" = default argument (if none, it is set to None)
+"int " in "function(int a,bool b=true)" = parameter type / param type
+"a" in "function(int a,bool b=true)" = parameter name / param name
+
+"1" in "TypeDefIndex: 1" = typedefindex
+
+"UnityEngine" in "// Namespace: UnityEngine" = namespace
+
+"public" in "public class classname" = type
+
+[ComVisibleAttribute] // RVA: 0x1 Offset: 0x1 VA: 0x1
+or
+[DebuggerBrowsableAttribute] // RVA: 0x1 Offset: 0x1 VA: 0x1
+etc. = attribute
+
+// Namespace:
+enum enumname // TypeDefIndex: 1
+{
+	// Fields
+	public int field;
+}
+or
+// Namespace:
+interface interfacename // TypeDefIndex: 1
+{
+	// Fields
+	public int field;
+}
+or
+// Namespace:
+struct structname // TypeDefIndex: 1
+{
+	// Fields
+	public int field;
+}
+or
+// Namespace:
+class classname // TypeDefIndex: 1
+{
+	// Fields
+	public int field;
+}
+etc. = object
