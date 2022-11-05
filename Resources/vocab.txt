@@ -1,28 +1,36 @@
-class a : b = derived class (CURRENT NAME IS SHARED CLASS MUST CHANGE)
+whether object is inherited ("class a: b" vs "class a") = is inherited (CURRENT NAME IS "is shared" MUST CHANGE)
 
-struct, class, interface, enum = object type (CURRENT NAME IS USER-DEFINED TYPE MUST CHANGE)
+base object in inherited object = base object (if none, it is set to None)
 
-"public" in "public class classname" = type (CURRENT NAME IS OBJECT TYPE MUST CHANGE)
+type of object ("struct", "class", "interface", "enum") = object type (CURRENT NAME IS "user-defined type" MUST CHANGE)
 
-readonly / public / abstract / const / bool / object int[] / char* etc.
-= primitive type (Simple types and complex types) (CURRENT NAME IS TYPE MUST CHANGE)
+"public" in "public class classname: baseclass" or "private" in "private enum enumname" = object data type (CURRENT NAME IS "object type" MUST CHANGE)
 
-Dictionary / Vector3 / Quaternion etc. = unity type
+"classname" in "public class classname: baseclass" or "enumname" in "private enum enumname" = object name
 
-PhotonNetworkingMessage / Color (any user-defined type not defined by Unity) = user-defined type
+how many methods / fields / properties are in object = object size
+
+"readonly" / "public" / "abstract" / "const" / "bool" / "object int[]" / "char*" etc.
+= primitive type (including complex types) (CURRENT NAME IS "type" MUST CHANGE)
+
+"Dictionary" / "Vector3" / "Quaternion" etc. = unity type
+
+"PhotonNetworkingMessage" / "Color" (any user-defined type not defined by Unity) = user-defined type
+
+user-definedtype / unity type / primitive type (including complex types) = data type (CURRENT NAME IS "type" MUST CHANGE)
 
 Content of // Methods = methods
 Content of "/* GenericInstMethod :" = genericintsmethods
 Content of // Fields = fields
 Content of // Properties = properties
 
-List<string>, Dictionary<bool,int> etc. = generic (CURRENT NAME IS DATA TYPE GROUP MUST CHANGE)
-"{ get; set}" in "public static int propety { get; set}" = property method (CURRENT NAME IS PROPERTY ATTRIBUTE MUST CHANGE)
+"List<string>", "Dictionary<bool,int> etc. = generic (CURRENT NAME IS "data type group" MUST CHANGE)
+"{ get; set}" in "public static int propety { get; set}" = property method (CURRENT NAME IS "property attribute" MUST CHANGE)
 
-// RVA: 0x1 Offset: 0x1 VA: 0x1 = offset string
-// 0x1 = field offset string
+"// RVA: 0x1 Offset: 0x1 VA: 0x1" = offset string
+""// 0x1" = field offset string
 "1" in "internal int field = 1 // 0x1" = field value (if none, it is set to None)
-0x1 = offset  (if none, it is set to None)
+"0x1" = offset  (if none, it is set to None)
 
 "int i = 1" in "function(int i = 1)" or "int a" in "function(int a,bool b=true)" = parameter / param
 "1" in "function(int i = 1)" = default argument (if none, it is set to None)
@@ -33,38 +41,38 @@ List<string>, Dictionary<bool,int> etc. = generic (CURRENT NAME IS DATA TYPE GRO
 
 "UnityEngine" in "// Namespace: UnityEngine" = namespace
 
-"public" in "public class classname" = type
-
-[ComVisibleAttribute] // RVA: 0x1 Offset: 0x1 VA: 0x1
+"[ComVisibleAttribute] // RVA: 0x1 Offset: 0x1 VA: 0x1"
 or
-[DebuggerBrowsableAttribute] // RVA: 0x1 Offset: 0x1 VA: 0x1
-etc. = attribute
+[DebuggerBrowsableAttribute] // RVA: 0x1 Offset: 0x1 VA: 0x1"
+etc. = attribute line
 
-// Namespace:
+"[ComVisibleAttribute]" or "[DebuggerBrowsableAttribute]" = attribute
+
+"// Namespace:
 enum enumname // TypeDefIndex: 1
 {
 	// Fields
 	public int field;
-}
+}"
 or
-// Namespace:
+"// Namespace:
 interface interfacename // TypeDefIndex: 1
 {
 	// Fields
 	public int field;
-}
+}"
 or
-// Namespace:
+"// Namespace:
 struct structname // TypeDefIndex: 1
 {
 	// Fields
 	public int field;
-}
+}"
 or
-// Namespace:
+"// Namespace:
 class classname // TypeDefIndex: 1
 {
 	// Fields
 	public int field;
-}
+}"
 etc. = object
