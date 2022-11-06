@@ -5,11 +5,17 @@ Output:
 Can generate json output, txt output, deobfuscated dll(s), deobfuscated apk, deobfuscated dump.cs, and more!
 
 Options:
+You can create multiple packages of options and give them names. This is useful if you want to have different
+settings (such as the trust unity types option) for different games. You can also import and export options
+file (they are stored as .json files)
 -Multi-select deobfuscation methods
 -Enable and disable certain things to balance speed and accuracy
 -Multi-select plugins to auto-detect and use in deobfuscate
 -Multi-select plugins to auto-detect and deobfuscate
--Comes with a few known plugins like Photon and CodeStage, but you can add more by adding apk (il2cpp or mono), dll or dummydll (all or just one), metadata and libil2cpp.so (for il2cpp) or dump.cs (for il2cpp) files and specifying the namespace(s) used by the plugin; the plugin will then be processed and the deobfuscation data will be added to the local database. You can also manually add custom types to trust (such as photoninfo) in methods, fields, and properties
+-Comes with a few known plugins like Photon and CodeStage, but you can add more by adding apk (il2cpp or mono), dll or dummydll (all or just one),
+metadata and libil2cpp.so (for il2cpp) or dump.cs (for il2cpp) files and specifying the namespace(s) used by
+the plugin; the plugin will then be processed and the deobfuscation data will be added to the local database.
+You can also manually add custom types to trust
 -Specify certain namespaces, classes, or methods to exclude from deobfuscation (in unobfuscated, obfuscated, or both)
 -Trust names (if two items have same name, they are a match in deobfuscation)
 -Only deobfuscate names with certain naming regex or chars
@@ -19,10 +25,17 @@ Options:
 -Force or auto-detect unity version
 -Trust user-defined types
 -Trust plugin types
+-Trust order (even if the game does not scramble methods / fields / properties, this is still not recommended
+because games may add, remove, and delete fields / methods / properties).
 -Configure deobfuscation tolerance
+-Configure how many candidates to accept (If there are more candidates than this number, only the best matches
+will be kept.)
+-Configure confidence to remove (if a match exceeds this confidence, it will be excluded
+when processing other items)
 -Choose between only take best match or take all matches
 -Change internal settings like size weight and field weight
-
+-Configure how to order classes / fields / methods etc.: Keep order of obfuscated, reorder to match unobfuscated,
+sort alphabetically, etc.
 
 Deobfuscation Methods:
 # - Brute Force Deobfuscation (Comparitive Deobfuscation) : A deobfuscation method that works by comparing unobfuscated and obfuscated dump.cs. It finds the class or member etc. by name. Then, it takes the class, and replaces the names and dynamic values with a certain string ('offset','methodname','classname','comment',etc.). This way, things such as data types, params, # of methods and fields, etc. can be compared. It then converts this into lists of methods, and each method has its method type, and the method params. Same is done on fields and class itself. There is a strikes system with a customizable strictness. It can automatically adapt by narrowing down the perfect strictness by moving it up and down and seeing how little results it can get while still getting results (the toggleable smart mode, changeable in settings or function parameters). This method takes a long time.
@@ -31,3 +44,15 @@ Deobfuscation Methods:
 # - String Count Deobfuscation: This deobfuscation method is kind of like regex search and mutual name deobfuscation. It compares the number of occurences of a name, string, or regex between game versions.
 # - Same Name Deobfuscation: In some games, such as pixel gun 3d, different obfuscated names with the same original names will have the same obfuscated names. This is probably caused by manual find-and-replace-ing. This can be forced by the user, or detected by the program when it finds this out via another form of deobfuscation. When activated, this mode simply finds and replaces text, the same way the names were likely obfuscated - but reversed. This only occurs in weak obfuscation by foolish developers, so don't expect to get lucky with it!
 # - Pattern Search Deobfuscation (AOB Deobfuscation): This deobfuscation methods generates aob for an unobfuscated class, method, field, etc., then searches for the aob in the new game version.
+# - Order Deobfuscation:  This deobfuscation method is not recommended. Inserting methods / fields will break it.
+It relies on fields / methods / classes etc. not being scrambled. For example:
+Method b comes two after method a
+You know which method method a is
+Therefore, you can assume method b is the method two methods after method a.
+# - Relative Offset Deobfuscation: This deobfuscation method is not recommended. It relies on
+fields / methods / not being scrambled. Inserting methods / fields will break it.
+This deobfuscation method uses relative field / method offsets. For example:
+Width's field offset is 0x1
+Length's field offset is 0x9
+You know the field offset of width in the obfuscated version is 0x33
+Therefore, you can assume the length field is the field with the field offset of 0x41.

@@ -19,19 +19,19 @@ def removewhitespace(fullstr, beginning=True, end=True, allwhitespace=False):
     raise NotImplementedError("removewhitespace function has been removed.\
          To trim whitespace, use the trim function. To remove all whitespace, use the removeallwhitespace funnction.")
 
-def getobjects(**kwargs):
+def getobjects(*args,**kwargs):
     """
     Function has been removed
     """
     raise NotImplementedError("getobjects function has been removed.\
-         To get objects, use dumpcs_getobjects directly on dumpcs."
+         To get objects, use dumpcs_getobjects directly on dumpcs.")
 
-def getfullobjects(**kwargs):
+def getfullobjects(*args,**kwargs):
         """
         Function has been removed
         """
         raise NotImplementedError("getfullobjects function has been removed.\
-             To get objects, use dumpcs_getobjects directly on dumpcs."
+             To get objects, use dumpcs_getobjects directly on dumpcs.")
 
 def removesubstring(s: str, sub: str) -> str:
     #Done
@@ -230,7 +230,7 @@ def getlines(s: str, toremoveblanklines: object = False, totrimlines: object = F
     """
     Possible Improvements:
         1. Creating a new list is inefficient, modifying existing list would be ideal
-        2. Directly using s.splitlines() instead of using lines variable may be faster, but sacrifices readability
+        2. Directly using s.splitlines() instead of using lines variable may be faster, but sacrifices readability  and simplicity  and simplicity
 
     Splits a string into a list of lines
 
@@ -391,7 +391,7 @@ def dumpcs_removeattributes(dumpcs: str) -> str:
     """
     Possible Improvements:
         1. Creating a new list of lines is inefficient, modifying existing list would be ideal
-        2. Directly using getlines() instead of using lines variable may be faster, but sacrifices readability
+        2. Directly using getlines() instead of using lines variable may be faster, but sacrifices readability  and simplicity
 
     Removes attributes from a dumpcs file
     Does not process attributes, only removes them
@@ -416,14 +416,37 @@ def dumpcs_removeattributes(dumpcs: str) -> str:
     return linestostring(newlines)
 
 
-def dumpcs_getobjects(dumpcs: str, objecttypes=None) -> dict:
+def dumpcs_getobjects(dumpcs: str,
+                      objecttypefilter=None,
+                      namespacefilter=None,
+                      doalphabeticalsort=True) -> dict:
     #Not Done
     """
-    Instead of getfullobjects, go straight to this function!
+    Docs Not Done!
+    Possible Improvements:
+        1. Creating a new list is inefficient, modifying existing list would be ideal
+        2. Directly using dumpcs.split() instead of using fullobjects variable may be faster,
+        but sacrifices readability and simplicity
+
+    Parses dumpcs file into a dictionary of objects
     Does not remove blank lines yet
 
-    objecttypes: if not object type in object types, ignore object
+    objecttypefilter: if object type is not in object types, ignore this object
     """
-    if objecttypes is None:
-        #Set default here to avoid mutable default argument
-        objecttypes = ["class", "struct", "enum", "interface"]
+    if objecttypefilter is None:
+        # Set default here to avoid mutable default argument
+        objecttypefilter = ["class", "struct", "enum", "interface"]
+    # Split dumpcs by "// Namespace: ", which can be used to mark the start of each object
+    fullobjects = dumpcs.split("// Namespace: ")
+    if fullobjects == []:
+        # If there aren't any objects in dumpcs (this is impossible, but just theoretically),
+        # we can terminate the function now to keep it simple
+        return {}
+    # The split function will capture everything before the first object
+    # since we split by the delimiter that starts objects, so delete that
+    del fullobjects[0]
+    #Build dictionary of objects from full objects
+    objects = []
+    for fullobject in fullobjects:
+        # Add "// Namespace: " back on, as string.split excludes the delimiter
+        fullobject = "// Namespace: " + fullobject
