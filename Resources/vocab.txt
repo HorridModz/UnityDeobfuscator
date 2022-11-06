@@ -19,10 +19,14 @@ how many methods / fields / properties are in object = object size
 
 user-definedtype / unity type / primitive type (including complex types) = data type (CURRENT NAME IS "type" MUST CHANGE)
 
-Content of // Methods = methods
+Content of // Methods = methods content
+Each method = method
 Content of "/* GenericInstMethod :" = genericintsmethods
-Content of // Fields = fields
-Content of // Properties = properties
+Each genericinstmethod = genericinstmethod
+Content of // Fields = fields content
+Each field = field
+Content of // Properties = properties content
+Each property = property
 
 "List<string>", "Dictionary<bool,int> etc. = generic (CURRENT NAME IS "data type group" MUST CHANGE)
 "{ get; set}" in "public static int propety { get; set}" = property method (CURRENT NAME IS "property attribute" MUST CHANGE)

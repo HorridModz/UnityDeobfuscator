@@ -3,6 +3,8 @@ import copy
 # noinspection PyUnresolvedReferences
 from typing import *
 import string
+from typing import Set, Any
+
 
 def removeattributes(thisobject, toremovenewlines=False):
     """
@@ -417,9 +419,10 @@ def dumpcs_removeattributes(dumpcs: str) -> str:
 
 
 def dumpcs_getobjects(dumpcs: str,
-                      objecttypefilter=None,
-                      namespacefilter=None,
-                      doalphabeticalsort=True) -> dict:
+                      createtypemodels=True,
+                      objecttypefilter: Union[set[str],None]=None,
+                      namespacefilter: Union[set[str],None]=None,
+                      customfilter: Union[Callable,None]=None) -> list[dict]:
     #Not Done
     """
     Docs Not Done!
@@ -427,26 +430,80 @@ def dumpcs_getobjects(dumpcs: str,
         1. Creating a new list is inefficient, modifying existing list would be ideal
         2. Directly using dumpcs.split() instead of using fullobjects variable may be faster,
         but sacrifices readability and simplicity
+        3. Having different loops for namespacefilter, objecttypefilter, customfilter, and combinations
+        is faster, but logner
+        4. Directly creating a dictionary may be faster than using variables for namespacefilter
+        and objecttypefilter, but sacrifices readability and simplicity
+        5. To save memory and speed, maybe only add object base if it exists. However, this
+        sacrifices readability and simplicity
+        6. Setting object's type model to None decreases errors and complexity, but
+        takes up extra memory and sacrifices speed
+        7. Returning a dictionary of objects by path (namespace -> object) may be faster and simpler than
+        returning a list of dictionaries (as to grab an object out of the list by its path, the list must be
+        iterated through until a match is found), but a list is simpler, easier, and faster to create,
+        process, and iterate over
 
     Parses dumpcs file into a dictionary of objects
     Does not remove blank lines yet
 
     objecttypefilter: if object type is not in object types, ignore this object
     """
-    if objecttypefilter is None:
-        # Set default here to avoid mutable default argument
-        objecttypefilter = ["class", "struct", "enum", "interface"]
+    # Sets are much faster than lists or tuples, so convert to them
+    if type(objecttypefilter) != set:
+        objecttypefilter = set(objecttypefilter)
+    if type(namespacefilter) != set:
+        namespacefilter = set(namespacefilter)
     # Split dumpcs by "// Namespace: ", which can be used to mark the start of each object
     fullobjects = dumpcs.split("// Namespace: ")
     if fullobjects == []:
         # If there aren't any objects in dumpcs (this is impossible, but just theoretically),
         # we can terminate the function now to keep it simple
-        return {}
+        return []
     # The split function will capture everything before the first object
     # since we split by the delimiter that starts objects, so delete that
     del fullobjects[0]
-    #Build dictionary of objects from full objects
+    # Build dictionary of objects from full objects
     objects = []
     for fullobject in fullobjects:
         # Add "// Namespace: " back on, as string.split excludes the delimiter
-        fullobject = "// Namespace: " + fullobject
+        content = "// Namespace: " + fullobject
+        # Exit early on objecttypefilter or namespacefilter to save some work
+        namespace = dumpcsobject_getobjectnamespace(content)
+        if namespacefilter is not None and not(namespace in namespacefilter):
+            continue
+        type = dumpcsobject_getobjecttype(content)
+        if objecttypefilter is not None and not (type in objecttypefilter):
+            continue
+        name = dumpcsobject_getobjectname(content)
+        datatype = dumpcs_getobjectdatatype(content)
+        isinherited = dumpcsobject_getisinherited(content)
+        if isinherited:
+            base = dumpcsobject_getbase(content)
+        else:
+            base = None
+        methods = dumpcsobject_getmethods(content)
+        fields = dumpcsobject_getfields(content)
+        properties = dumpcsobject_getproperties(content)
+        Object = {
+            "content": content,
+            "name": name,
+            "type" type,
+            "namespace": namespace,
+            "datatype": datatype,
+            "isinherited": isinherited
+            "methods": methods
+            "fields": fields
+            "properties": properties
+            "base": base,
+        }
+        # Now that we have all the object's data, we can check against custom filter.
+        # This allows us to avoid creating the object's type model
+        if customfilter is not None and not(customfilter(Object)):
+            continue
+        if createtypemodels:
+            # Create type model from the object, then and add it to the object
+            typemodel = buildtypemodel(Object)
+            Object["typemodel"] = typemodel
+        else:
+            Object["typemodel"] = None
+        objects.append(Object)
