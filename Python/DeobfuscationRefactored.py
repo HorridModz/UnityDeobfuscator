@@ -35,6 +35,42 @@ def getfullobjects(*args,**kwargs):
         raise NotImplementedError("getfullobjects function has been removed.\
              To get objects, use dumpcs_getobjects directly on dumpcs.")
 
+
+def readaftersubstring(s: str,sub: str) -> str:
+    #Done
+    """
+    Docs Not Done!
+
+    This function is based off of
+    https://stackoverflow.com/questions/12572362/how-to-get-a-string-after-a-specific-substring/57064170#57064170
+    Possible Improvements:
+        1.  Directly returning instead of using suffix variable may be faster, but sacrifices
+        readability and simplicity
+    """
+    prefix, success, suffix = s.partition(sub)
+    if not success:
+        suffix = prefix
+    return(suffix)
+
+
+def readbeforesubstring(s: str,sub: str) -> str:
+    #Done
+    """
+    Docs Not Done!
+
+    This function is based off of
+    https://stackoverflow.com/questions/12572362/how-to-get-a-string-after-a-specific-substring/57064170#57064170
+
+    Possible Improvements:
+        1.  Directly returning instead of using prefix variable may be faster, but sacrifices
+        readability and simplicity
+    """
+    prefix, success, suffix = s.partition(sub)
+    if not success:
+        prefix = suffix
+    return (prefix)
+
+
 def removesubstring(s: str, sub: str) -> str:
     #Done
     """
@@ -226,8 +262,31 @@ def trim(s: str, leading=True, trailing=True) -> str:
     else:
         return s
 
+def getwords(s: str) -> list[str]:
+    # Done, but maybe could be optimized
+    """
+    Possible Improvements:
 
-def getlines(s: str, toremoveblanklines: object = False, totrimlines: object = False) -> list[str]:
+    Splits a string into a list of words
+    Treats any type of whitespace as a word delimiter, including new lines and tabs
+
+    Example:
+        String: "the quick
+                    brown       fox
+
+                 abcdefg  "
+        Return: ["the","quick","brown","fox","abcdefg"]
+
+    Arguments:
+        s: string to split into words
+
+    Return:
+        list of the string's words
+    """
+    return s.split()
+
+
+def getlines(s: str, toremoveblanklines:False, totrimlines= False) -> list[str]:
     # Done, but maybe could be optimized
     """
     Possible Improvements:
@@ -249,7 +308,7 @@ def getlines(s: str, toremoveblanklines: object = False, totrimlines: object = F
         s: string to split into lines
         toremoveblanklines: whether to ignore blank lines
         totrimlines: whether to trim leading and trailing whitespace
-        (only leadhing / only trailing whitespace is not supported)
+        (only leading / only trailing whitespace is not supported)
 
     Return:
         list of the string's lines
@@ -375,7 +434,7 @@ def dumpcs_constructor(path: str, attributeswarning=False) -> str:
     raise NotImplementedError("filehandler.read_file function does not exist")
     if not(dumpcs_isvalid(dumpcs)):
         #raise exceptions.errors.invaliddumpcs(path)
-        raise NotImplementedError("exceptions.errors.invaliddumpcs exception does not exist")
+        raise NotImplementedError("exceptions.errors.invaliddumpcs function does not exist")
     #No need to warn about attributes as they should be removed automatically
     #if attributeswarning and dumpcs_hasattributes(dumpcs):
         #exceptions.warnings.dumpcsattributeswarning(path)
@@ -383,8 +442,8 @@ def dumpcs_constructor(path: str, attributeswarning=False) -> str:
         dumpcs = dumpcs_removeattributes(dumpcs)
     formaterrors = dumpcs_checkformat(dumpcs)
     if formaterrors != []:
-        #exceptions.warnings.unexpecteddumpcsformat(path,formaterrors)
-        raise NotImplementedError("exceptions.warnings.unexpecteddumpcsformat function does not exist")
+        #exceptions.warnings.unexpecteddumpcsformatearly(path,formaterrors)
+        raise NotImplementedError("exceptions.warnings.unexpecteddumpcsformatearly function does not exist")
     return dumpcs
 
 
@@ -403,7 +462,7 @@ def dumpcs_removeattributes(dumpcs: str) -> str:
         dumpcs: the string of the dumpcs file
 
     Returns:
-        string containing dumpcs contents with attributes removed
+        string containing dumpcs content with attributes removed
    """
     lines = getlines(dumpcs, False, False)
     newlines = []
@@ -413,10 +472,60 @@ def dumpcs_removeattributes(dumpcs: str) -> str:
         # If the first non-whitespace character on the line is a square bracket,
         # this means the line is an attribute
         if trimmedline[0] != "[":
-            #The line is not an attribute, so keep it
+            #The line is not an attribute line, so keep it
             newlines.append(line)
     return linestostring(newlines)
 
+
+def dumpcsobject_getnamespace(content):
+    # Not Done
+    """
+    Docs Not Done!
+    Possible Improvements:
+        1. Using string.find "\n" and taking a substring is faster than splitting the object into lines,
+        but sacrifices readability and simplicity
+        2. Directly using getlines() instead of using lines variable may be faster, but sacrifices
+        readability and simplicity
+        3.  Directly returning instead of using variable may be faster, but sacrifices
+        readability and simplicity
+        4. Directly using lines[0] instead of using namespaceline variable may be faster, but sacrifices
+        readability and simplicity
+
+    Gets the namespace of a dumpcs object
+    """
+    lines = getlines(content)
+    namespaceline = lines[0]
+    namespace = readaftersubstring(namespaceline,"// Namespace: ")
+    return(namespace)
+
+def dumpcsobject_gettype(content):
+    # Not Done
+    """
+    Docs Not Done!
+    Possible Improvements:
+        1. Using string.find "\n" and taking a substring is faster than splitting the object into lines,
+        but sacrifices readability and simplicity
+        2. Directly using getlines() instead of using lines variable may be faster, but sacrifices
+        readability and simplicity
+        3.  Directly returning instead of using type variable and breaking loop out of loop may be faster,
+        but sacrifices readability and simplicity
+        4. Directly using lines[1] instead of using objectdeclarationline variable may be faster, but sacrifices
+        readability and simplicity
+        5. Object types should be a constant
+
+    Gets the type (struct, class, enum, or interface) of a dumpcs object
+    """
+    objecttypes = set("class,struct,interface,enum")  # should be a constant!
+    lines = getlines(content)
+    objectdeclarationline = lines[1]
+    words = getwords(objectdeclarationline)
+    for word in words:
+        if word in objecttypes:
+            return(word)
+    # Object type (class, struct, enum, interface) not found
+    #exceptions.errors.unexpecteddumpcsformat(f"Could not find type of object:\n{content}")
+    raise NotImplementedError("exceptions.errors.unexpecteddumpcsformat function does not exist")
+    return(None)
 
 def dumpcs_getobjects(dumpcs: str,
                       createtypemodels=True,
@@ -442,19 +551,19 @@ def dumpcs_getobjects(dumpcs: str,
         returning a list of dictionaries (as to grab an object out of the list by its path, the list must be
         iterated through until a match is found), but a list is simpler, easier, and faster to create,
         process, and iterate over
+        8. Object delimiter should be a constant
 
-    Parses dumpcs file into a dictionary of objects
-    Does not remove blank lines yet
-
-    objecttypefilter: if object type is not in object types, ignore this object
+    Parses dumpcs file into a list of objects
+    Does not remove blank lines
     """
+    objectdelimiter = "// Namespace: "  # Should be a constant
     # Sets are much faster than lists or tuples, so convert to them
     if type(objecttypefilter) != set:
         objecttypefilter = set(objecttypefilter)
     if type(namespacefilter) != set:
         namespacefilter = set(namespacefilter)
     # Split dumpcs by "// Namespace: ", which can be used to mark the start of each object
-    fullobjects = dumpcs.split("// Namespace: ")
+    fullobjects = dumpcs.split(objectdelimiter)
     if fullobjects == []:
         # If there aren't any objects in dumpcs (this is impossible, but just theoretically),
         # we can terminate the function now to keep it simple
@@ -466,16 +575,16 @@ def dumpcs_getobjects(dumpcs: str,
     objects = []
     for fullobject in fullobjects:
         # Add "// Namespace: " back on, as string.split excludes the delimiter
-        content = "// Namespace: " + fullobject
+        content = objectdelimiter + fullobject
         # Exit early on objecttypefilter or namespacefilter to save some work
-        namespace = dumpcsobject_getobjectnamespace(content)
+        namespace = dumpcsobject_getnamespace(content)
         if namespacefilter is not None and not(namespace in namespacefilter):
             continue
-        type = dumpcsobject_getobjecttype(content)
+        type = dumpcsobject_gettype(content)
         if objecttypefilter is not None and not (type in objecttypefilter):
             continue
-        name = dumpcsobject_getobjectname(content)
-        datatype = dumpcs_getobjectdatatype(content)
+        name = dumpcsobject_getname(content)
+        datatype = dumpcs_getdatatype(content)
         isinherited = dumpcsobject_getisinherited(content)
         if isinherited:
             base = dumpcsobject_getbase(content)
@@ -501,9 +610,10 @@ def dumpcs_getobjects(dumpcs: str,
         if customfilter is not None and not(customfilter(Object)):
             continue
         if createtypemodels:
-            # Create type model from the object, then and add it to the object
+            # Create type model from the object's data, then add it to the object
             typemodel = buildtypemodel(Object)
             Object["typemodel"] = typemodel
         else:
             Object["typemodel"] = None
         objects.append(Object)
+    return(objects)
