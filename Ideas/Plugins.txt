@@ -1,0 +1,2 @@
+If you have another deobfuscation method, feel free to implement it via the plugin system. A plugin is just
+another deobfuscation function that can be disabled or enabled.

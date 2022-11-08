@@ -10,6 +10,9 @@ settings (such as the trust unity types option) for different games. You can als
 file (they are stored as .json files)
 -Multi-select deobfuscation methods
 -Enable and disable certain things to balance speed and accuracy
+-Options for what can and cannot change - data types, whether class has a certain method, data type of class,
+etc.
+-Option to add your own data types and unity types (in case the project missed something, or unity implements new types)
 -Multi-select plugins to auto-detect and use in deobfuscate
 -Multi-select plugins to auto-detect and deobfuscate
 -Comes with a few known plugins like Photon and CodeStage, but you can add more by adding apk (il2cpp or mono), dll or dummydll (all or just one),

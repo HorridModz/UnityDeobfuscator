@@ -1,3 +1,4 @@
+import sys
 # noinspection PyUnresolvedReferences
 import copy
 from typing import *
@@ -38,7 +39,7 @@ def getfullobjects(*args, **kwargs):
              To get objects, use dumpcs_getobjects directly on dumpcs.")
 
 
-def readaftersubstring(sub: str, s: str) -> str:
+def readaftersubstring(sub: str, s: str, lengthwarning=True) -> str:
     #Done
     """
     Docs Not Done!
@@ -49,16 +50,19 @@ def readaftersubstring(sub: str, s: str) -> str:
         1.  Directly returning instead of using suffix variable may be faster, but sacrifices
         readability and simplicity
     """
+    if lengthwarning and len(sub) > len(s):
+        raise SyntaxWarning(f"Call to readaftersubstring(sub={sub}, str={s}): \
+         substring is longer than full string")
     prefix, success, suffix = s.partition(sub)
     if not success:
         suffix = prefix
     return suffix
 
 
-def readbeforesubstring(sub: str, s: str) -> str:
+def readbeforesubstring(sub: str, s: str, lengthwarning=True) -> str:
     #Done
     """
-    Docs Not Done!
+    Docs not done!
 
     This function is based off of
     https://stackoverflow.com/questions/12572362/how-to-get-a-string-after-a-specific-substring/57064170#57064170
@@ -67,6 +71,9 @@ def readbeforesubstring(sub: str, s: str) -> str:
         1.  Directly returning instead of using prefix variable may be faster, but sacrifices
         readability and simplicity
     """
+    if lengthwarning and len(sub) > len(s):
+        raise SyntaxWarning(f"Call to readaftersubstring(sub={sub}, str={s}): \
+         substring is longer than full string")
     prefix, success, suffix = s.partition(sub)
     if not success:
         prefix = suffix
@@ -78,7 +85,7 @@ def removesubstring(sub: str, s: str) -> str:
     """
     Possible Improvements:
 
-    Remove one substring from a string
+    Removes one substring from a string
 
     Example:
         String: "Removing Substrings"
@@ -100,7 +107,7 @@ def removesubstrings(s: str, subs: list[str]) -> str:
     """
     Possible Improvements:
 
-    Remove multiple substring from a string, in order of list
+    Removes multiple substring from a string, in order of the list
 
     Example:
         String: "Removing Substrings"
@@ -265,6 +272,7 @@ def trim(s: str, leading=True, trailing=True) -> str:
     else:
         return s
 
+
 def getwords(s: str) -> list[str]:
     # Done
     """
@@ -377,7 +385,7 @@ def getlines(s: str,
         for line in lines:
             if totrimlines:
                 line = trim(line, True, True)
-            if not (iswhitespace(line) and toremoveblanklines):
+            if not (toremoveblanklines and iswhitespace(line)):
                 newlines.append(line)
         return newlines
     else:
@@ -413,7 +421,7 @@ def linestostring(lines: list[str],
     Return:
         string containing all the lines concatenated by new line
     """
-    return wordstostring(lines,totrimlines,toignoreblanklines,toignoreblanklines,"\n")
+    return wordstostring(lines, totrimlines, toignoreblanklines, toignoreblanklines, "\n")
 
 
 def dumpcs_isvalid(dumpcs: str) -> bool:
@@ -494,12 +502,12 @@ def dumpcs_constructor(path: str, attributeswarning=False) -> str:
         string containing the contents of the dump.cs file
     """
     #Does this try except clause make a difference? IDK whether to keep it
-    #try:
-        #dumpcs = filehandler.read_file(path)
-        #raise NotImplementedError("filehandler.read_file function does not exist")
-    #except Exception as exception:
-        #raise exception
-    # dumpcs = filehandler.read_file(path)
+#    try:
+#        dumpcs = filehandler.read_file(path)
+#        raise NotImplementedError("filehandler.read_file function does not exist")
+#    except Exception as exception:
+#        raise exception
+#    dumpcs = filehandler.read_file(path)
     raise NotImplementedError("filehandler.read_file function does not exist")
     if not(dumpcs_isvalid(dumpcs)):
         #raise exceptions.errors.invaliddumpcs(path)
@@ -549,7 +557,7 @@ def dumpcs_removeattributes(dumpcs: str) -> str:
 
 def dumpcsobject_getnamespace(content: str,
                               objectcache: dict[Any, Any],
-                              namespacecache: dict[str]={}) -> str:
+                              namespacecache: dict[str] = {}) -> str:
     # Yes, the multiple default argument is intentional.
     # It allows us to cache namespaces within this function.
     # Not Done
@@ -575,9 +583,10 @@ def dumpcsobject_getnamespace(content: str,
         if namespaceline in namespacecache:
             namespace = namespacecache[namespaceline]
         else:
-            namespace = readaftersubstring("// Namespace: ",namespaceline)
+            namespace = readaftersubstring("// Namespace: ", namespaceline)
             namespacecache[namespaceline] = namespace
     return namespace
+
 
 def dumpcsobject_gettype(content, objectcache: dict[Any, Any]) -> str:
     # Not Done
@@ -596,7 +605,7 @@ def dumpcsobject_gettype(content, objectcache: dict[Any, Any]) -> str:
 
     Gets the type (struct, class, enum, or interface) of a dumpcs object
     """
-    objecttypes = set(["class","struct","interface","enum"])  # should be a constant!
+    objecttypes = {"class", "struct", "interface", "enum"}  # should be a constant!
     words = objectcache["objectdeclarationwords"]
     for word in words:
         if word in objecttypes:
@@ -604,9 +613,9 @@ def dumpcsobject_gettype(content, objectcache: dict[Any, Any]) -> str:
     # Object type (class, struct, enum, interface) not found
     #exceptions.errors.unexpecteddumpcsformat(f"Could not find type of object:\n{content}")
     raise NotImplementedError("exceptions.errors.unexpecteddumpcsformat function does not exist")
-    return None
 
-def dumpcsobject_getdatatype(content, objectcache: dict[Any,Any]) -> str:
+
+def dumpcsobject_getdatatype(content, objectcache: dict[Any, Any]) -> str:
     # Not Done
     """
     Docs Not Done!
@@ -625,7 +634,7 @@ def dumpcsobject_getdatatype(content, objectcache: dict[Any,Any]) -> str:
 
     Gets the data type of a dumpcs object
     """
-    objecttypes = set(["class","struct","interface","enum"])  # should be a constant!
+    objecttypes = {"class", "struct", "interface", "enum"} # should be a constant!
     words = objectcache["objectdeclarationwords"]
     datatypewords = []
     for word in words:
@@ -637,7 +646,7 @@ def dumpcsobject_getdatatype(content, objectcache: dict[Any,Any]) -> str:
     # Object type (class, struct, enum, interface) not found
     #exceptions.errors.unexpecteddumpcsformat(f"Could not find type of object:\n{content}")
     raise NotImplementedError("exceptions.errors.unexpecteddumpcsformat function does not exist")
-    return None
+
 
 def dumpcsobject_getname(content, objectcache: dict[Any, Any]) -> str:
     # Not Done
@@ -660,14 +669,15 @@ def dumpcsobject_getname(content, objectcache: dict[Any, Any]) -> str:
     """
     objectdeclarationline = objectcache["objectdeclarationline"]
     if objectcache["isinherited"]:
-        prefix = readbeforesubstring(" : ",objectdeclarationline)
+        prefix = readbeforesubstring(" : ", objectdeclarationline)
     else:
-        prefix = readbeforesubstring(" //",objectdeclarationline)
+        prefix = readbeforesubstring(" //", objectdeclarationline)
     words = getwords(prefix)
     name = words[len(words) - 1]
     return name
 
-def dumpcsobject_getbase(content, objectcache: dict[Any, Any]) -> str:
+
+def dumpcsobject_getbase(content, objectcache: dict[Any, Any]) -> Union[str, None]:
     # Not Done
     """
     Docs Not Done!
@@ -689,9 +699,10 @@ def dumpcsobject_getbase(content, objectcache: dict[Any, Any]) -> str:
     objectdeclarationline = objectcache["objectdeclarationline"]
     if not(objectcache["isinherited"]):
         return None
-    suffix = readaftersubstring(" : ",objectdeclarationline)
-    base = readbeforesubstring(" //",suffix)
+    suffix = readaftersubstring(" : ", objectdeclarationline)
+    base = readbeforesubstring(" //", suffix)
     return base
+
 
 def dumpcsobject_gettypedefindex(content, objectcache: dict[Any, Any]) -> str:
     # Not Done
@@ -713,10 +724,11 @@ def dumpcsobject_gettypedefindex(content, objectcache: dict[Any, Any]) -> str:
     Gets the data type of a dumpcs object
     """
     objectdeclarationline = objectcache["objectdeclarationline"]
-    typedefindex =  readaftersubstring("// TypeDefIndex: ",objectdeclarationline)
+    typedefindex = readaftersubstring("// TypeDefIndex: ", objectdeclarationline)
     return typedefindex
 
-def dumpcsobject_isinherited(content, objectcache: dict[Any, Any]) -> str:
+
+def dumpcsobject_isinherited(content, objectcache: dict[Any, Any]) -> bool:
     # Not Done
     """
     Docs Not Done!
@@ -738,11 +750,12 @@ def dumpcsobject_isinherited(content, objectcache: dict[Any, Any]) -> str:
     objectdeclarationline = objectcache["objectdeclarationline"]
     return " : " in objectdeclarationline
 
+
 def dumpcs_getobjects(dumpcs: str,
                       createtypemodels=True,
-                      objecttypefilter: Union[set[str],None]=None,
-                      namespacefilter: Union[set[str],None]=None,
-                      customfilter: Union[Callable,None]=None) -> list[dict]:
+                      objecttypefilter: Union[set[str], None] = None,
+                      namespacefilter: Union[set[str], None] = None,
+                      customfilter: Union[Callable, None] = None) -> list[dict]:
     #Not Done
     """
     Docs Not Done!
@@ -769,7 +782,8 @@ def dumpcs_getobjects(dumpcs: str,
     """
     objectdelimiter = "// Namespace: "  # Should be a constant
     if dumpcs_hasattributes(dumpcs):
-        exceptions.warnings.dumpcsattributesnotremoved()
+        #exceptions.warnings.dumpcsattributesnotremoved()
+        raise NotImplementedError("exceptions.warnings.dumpcsattributesnotremoved function does not exist")
         dumpcs = dumpcs_removeattributes(dumpcs)
     # Split dumpcs by "// Namespace: ", which can be used to mark the start of each object
     fullobjects = dumpcs.split(objectdelimiter)
@@ -787,30 +801,34 @@ def dumpcs_getobjects(dumpcs: str,
         objectcache = {}
         # Add "// Namespace: " back on, as string.split excludes the delimiter
         content = objectdelimiter + fullobject
-        lines =  getlines(content)
+        lines = getlines(content)
         objectcache["lines"] = lines
-        namespace = dumpcsobject_getnamespace(content,objectcache)
+        # We only need lines cached to calculate namespace
+        namespace = dumpcsobject_getnamespace(content, objectcache)
+        # Exit early on namespacefilter to save some work
         if namespacefilter is not None and not(namespace in namespacefilter):
             continue
         objectdeclarationline = lines[1]
         objectcache["objectdeclarationline"] = objectdeclarationline
         objectcache["objectdeclarationwords"] = getwords(objectdeclarationline)
-        # Exit early on objecttypefilter or namespacefilter to save some work
-        objecttype = dumpcsobject_gettype(content,objectcache)
+        # The name objecttype is used because type is a keyword
+        objecttype = dumpcsobject_gettype(content, objectcache)
+        # Exit early on objecttypefilter to save some work
         if objecttypefilter is not None and not (objecttype in objecttypefilter):
             continue
-        isinherited = dumpcsobject_isinherited(content,objectcache)
+        isinherited = dumpcsobject_isinherited(content, objectcache)
         objectcache["isinherited"] = isinherited
-        name = dumpcsobject_getname(content,objectcache)
-        datatype = dumpcsobject_getdatatype(content,objectcache)
+        name = dumpcsobject_getname(content, objectcache)
+        datatype = dumpcsobject_getdatatype(content, objectcache)
         if isinherited:
-            base = dumpcsobject_getbase(content,objectcache)
+            base = dumpcsobject_getbase(content, objectcache)
         else:
             base = None
-        typedefindex = dumpcsobject_gettypedefindex(content,objectcache)
-        methods = dumpcsobject_getmethods(content,objectcache)
-        fields = dumpcsobject_getfields(content,objectcache)
-        properties = dumpcsobject_getproperties(content,objectcache)
+        typedefindex = dumpcsobject_gettypedefindex(content, objectcache)
+        methods = dumpcsobject_getmethods(content, objectcache)
+        fields = dumpcsobject_getfields(content, objectcache)
+        properties = dumpcsobject_getproperties(content, objectcache)
+        #The name Object is capitalized because object is a keyword in python
         Object = {
             "content": content,
             "name": name,
