@@ -40,52 +40,83 @@ def getfullobjects(*args, **kwargs):
 
 
 def readaftersubstring(sub: str, s: str, lengthwarning=True) -> str:
-    #Done
+    # Done
     """
-    Docs Not Done!
-
     This function is based off of
     https://stackoverflow.com/questions/12572362/how-to-get-a-string-after-a-specific-substring/57064170#57064170
+
     Possible Improvements:
         1.  Directly returning instead of using suffix variable may be faster, but sacrifices
         readability and simplicity
+
+    Returns the substring after the delimiter
+    If the substring is not found in the string, returns the whole string
+
+    Example:
+        String: "Split this string by delimiter"
+        Sub:    "string"
+        Return: " by delimiter"
+
+    Arguments:
+        s: string to split
+        sub: delimiter to read after
+        lengthwarning: whether to throw a warning if the arguments do not make sense (this is purely
+        to catch bugs)
+
+    Return:
+        section of string that comes after the delimiter
     """
     if lengthwarning and len(sub) > len(s):
         raise SyntaxWarning(f"Call to readaftersubstring(sub={sub}, str={s}): \
          substring is longer than full string")
-    prefix, success, suffix = s.partition(sub)
-    if not success:
+    prefix, found, suffix = s.partition(sub)
+    if not found:
         suffix = prefix
     return suffix
 
 
 def readbeforesubstring(sub: str, s: str, lengthwarning=True) -> str:
-    #Done
+    # Done
     """
-    Docs not done!
-
     This function is based off of
     https://stackoverflow.com/questions/12572362/how-to-get-a-string-after-a-specific-substring/57064170#57064170
 
     Possible Improvements:
         1.  Directly returning instead of using prefix variable may be faster, but sacrifices
         readability and simplicity
+
+    Returns the substring before the delimiter
+    If the substring is not found in the string, returns the whole string
+
+    Example:
+        String: "Split this string by delimiter"
+        Sub:    "string"
+        Return: "Split this "
+
+    Arguments:
+        s: string to split
+        sub: delimiter to read before
+        lengthwarning: whether to throw a warning if the arguments do not make sense (this is purely
+        to catch bugs)
+
+    Return:
+        section of string that comes before the delimiter
     """
     if lengthwarning and len(sub) > len(s):
         raise SyntaxWarning(f"Call to readaftersubstring(sub={sub}, str={s}): \
          substring is longer than full string")
-    prefix, success, suffix = s.partition(sub)
-    if not success:
+    prefix, found, suffix = s.partition(sub)
+    if not found:
         prefix = suffix
     return prefix
 
 
 def removesubstring(sub: str, s: str) -> str:
-    #Done
+    # Done
     """
     Possible Improvements:
 
-    Removes one substring from a string
+    Removes all occurrences of one substring from a string
 
     Example:
         String: "Removing Substrings"
@@ -103,11 +134,11 @@ def removesubstring(sub: str, s: str) -> str:
 
 
 def removesubstrings(s: str, subs: list[str]) -> str:
-    #Done
+    # Done
     """
     Possible Improvements:
 
-    Removes multiple substring from a string, in order of the list
+    Removes all occurrences of multiple substrings from a string, in order of the list of substrings
 
     Example:
         String: "Removing Substrings"
@@ -127,17 +158,49 @@ def removesubstrings(s: str, subs: list[str]) -> str:
 
 
 def replacesubstring(s: str, sub: str, replace: str) -> str:
-    #Done
+    # Done
     """
-    Doc Not Done
+    Possible Improvements:
+
+    Replaces all occurrences of one substring in a string
+
+    Example:
+        String:  "Replacing Substrings"
+        Sub:     "ing"
+        Replace: "ed"
+        Return: "Replaced Substreds"
+
+    Arguments:
+        s: string to replace substring in
+        sub: substring to replace
+        replace: what to replace substring with
+
+    Return:
+        string with substring replaced with replace
     """
     return s.replace(sub, replace)
 
 
 def replacesubstrings(s: str, subs: list[str], replace: str) -> str:
-    #Done
+    # Done
     """
-    Doc Not Done
+    Possible Improvements:
+
+    Replaces all occurrences of multiple substrings in a string, in order of the list of substrings
+
+    Example:
+        String:  "Replacing Substrings"
+        Subs:     ["e","in","ing"]
+        Replace: "c"
+        Return: "Rcplaccg Substrcgs"
+
+     Arguments:
+        s: string to replace substrings in
+        subs: list of substrings to remove in string
+        replace: what to replace substring with
+
+    Return:
+        string with substrings replaced with replace
     """
     for sub in subs:
         s = replacesubstring(s, sub, replace)
@@ -145,10 +208,10 @@ def replacesubstrings(s: str, subs: list[str], replace: str) -> str:
 
 
 def removeallwhitespace(s: str) -> str:
-    #Done, but maybe could be optimized
-    #NOTE: Function is named removeallwhitespace because old function removewhitespace
-    #was for trimming. Once all functions use trim instead, this function can be renamed
-    #back to removewhitespace.
+    # Done
+    # NOTE: Function is named removeallwhitespace because old function removewhitespace
+    # was for trimming. Once all functions use trim instead, this function can be renamed
+    # back to removewhitespace.
     """
     Possible Improvements:
         Make whitespace a constant instead of unpacking each time function is called
@@ -173,12 +236,13 @@ def removeallwhitespace(s: str) -> str:
     return removesubstrings(s, _whitespace)
 
 
-def removeblanklines(s: str, toremovewhitespacelines=True) -> str:
-    #Not Done
+def removeblanklines(s: str) -> str:
+    # Done
     """
     Possible Improvements:
 
     Removes all blank lines from a string
+    This function does not remove lines with only whitespace!
 
     Example:
         String: "
@@ -189,7 +253,6 @@ def removeblanklines(s: str, toremovewhitespacelines=True) -> str:
 
             thisstr
          ing"
-        toremovewhitespacelines: true
         Return: "blank
             lines will be
             removed from
@@ -198,19 +261,15 @@ def removeblanklines(s: str, toremovewhitespacelines=True) -> str:
 
     Arguments:
         s: string to remove blank lines from
-        toremovewhitespacelines: whether to remove lines with only whitespace (eg: "    ")
 
     Return:
         string with blank lines removed
     """
-    if toremovewhitespacelines:
-        raise NotImplementedError("removeblanklines with toremovewhitespacelines is not done")
-    else:
-        return replacesubstring(s, "\n\n", "\n")
+    return replacesubstring(s, "\n\n", "\n")
 
 
 def iswhitespace(s: str, totreatblankaswhitespace=True) -> bool:
-    #Done
+    # Done
     """
     Possible Improvements:
 
@@ -307,7 +366,7 @@ def wordstostring(words: list[str],
                   toignoreblankwords=True,
                   toignorewhitespacewords=False,
                   concatenator=" ") -> str:
-    #Done
+    # Done
     """
     Possible Improvements:
         1. Creating a new list is inefficient, modifying existing list would be ideal
@@ -351,7 +410,7 @@ def wordstostring(words: list[str],
 def getlines(s: str,
              toremoveblanklines=False,
              totrimlines=False) -> list[str]:
-    # Done, but maybe could be optimized
+    # Done
     """
     Possible Improvements:
         1. Creating a new list is inefficient, modifying existing list would be ideal
@@ -430,9 +489,10 @@ def dumpcs_isvalid(dumpcs: str) -> bool:
     Bad detection, needs proper algorithm
 
     Determines whether a dumpcs file is valid
+    Works by checking against some substrings that some should exist in all valid dump.cs files
     All dumpcs files entered should be valid, but of course they must be checked.
     Note: This function only performs a short check on the file as a whole.
-    On the other hand, the dumpcs_checkformat function analyzes the whole thing and is very picky .
+    On the other hand, the dumpcs_checkformat function analyzes the whole thing and is very picky.
 
     Arguments:
         dumpcs: the string of the dumpcs file
@@ -440,12 +500,11 @@ def dumpcs_isvalid(dumpcs: str) -> bool:
     Return:
         bool whether the dumpcs is valid
     """
-    # return "// Image" in dumpcs and "// RVA: 0x" in dumpcs and "// Namespace:" in dumpcs\
-    # and " TypeDefIndex: " in dumpcs
-    raise NotImplementedError("Dumpcs_isvalid function needs improvement")
-    if len(dumpcs) == 0:
-        return False
-    return True
+    checks = ("// Image 0:","// Namespace:","class","	// Methods","// RVA: 0x")
+    for check in checks:
+        if not check in dumpcs:
+            return(False)
+    return(True)
 
 
 def dumpcs_checkformat(dumpcs: str) -> list[str]:
@@ -463,31 +522,43 @@ def dumpcs_checkformat(dumpcs: str) -> list[str]:
     raise NotImplementedError("Dumpcs_checkformat function not completed")
 
 
-def dumpcs_hasattributes(dumpcs: str) -> bool:
-    #Not done
+def dumpcs_hasattributes(dumpcs: str,fastcheck = False) -> bool:
+    # Done
     """
-    Bad detection, needs proper algorithm
+
+    Possible Improvements:
+        1. Directly using getlines() instead of using lines variable may be faster, but sacrifices
+        readability and simplicity
 
     Determines whether a dumpcs file has attributes
 
     Arguments:
         dumpcs: the string of the dumpcs file
+        fastcheck: whether to perform a fast or through check for attributes (fast should be sufficient,
+        but it is safer to perform a thorough check)
 
     Return:
         bool whether the dumpcs has attributes
     """
-    raise NotImplementedError("Dumpcs_hasattributes function not completed")
-    #return "[CompilerGeneratedAttribute]" in dumpcs
+    if fastcheck:
+        return "[CompilerGeneratedAttribute]" in dumpcs
+    else:
+        lines = getlines(dumpcs, False, False)
+        for line in lines:
+            # Trim leading whitespace from line
+            trimmedline = trim(line, True, False)
+            # If the first non-whitespace character on the line is a square bracket,
+            # this means the line is an attribute
+            if trimmedline == "" or trimmedline[0] != "[":
+                return(True)
+        return(False)
 
 
 def dumpcs_constructor(path: str, attributeswarning=False) -> str:
-    #Done, but needs improvement
+    # Done
     """
     Possible Improvements:
-        1. No need to warn about attributes as they should be removed automatically.
-        However, I want to keep this code commented out and not delete it in case I
-        change my mind later.
-        2. Setting dumpcs variable after removing attributes makes code more readable and concise,
+        1. Setting dumpcs variable after removing attributes makes code more readable and concise,
         but is less inefficient than directing passing result of dumpcs_removeattributes.
         In addition, attributes must be removed *before* dumpcs is checked for format errors
         3. Does try except clause make a difference? IDK whether to keep it.
@@ -512,9 +583,6 @@ def dumpcs_constructor(path: str, attributeswarning=False) -> str:
     if not(dumpcs_isvalid(dumpcs)):
         #raise exceptions.errors.invaliddumpcs(path)
         raise NotImplementedError("exceptions.errors.invaliddumpcs function does not exist")
-    #No need to warn about attributes as they should be removed automatically
-    #if attributeswarning and dumpcs_hasattributes(dumpcs):
-        #exceptions.warnings.dumpcsattributeswarning(path)
     if dumpcs_hasattributes(dumpcs):
         dumpcs = dumpcs_removeattributes(dumpcs)
     formaterrors = dumpcs_checkformat(dumpcs)
@@ -634,7 +702,7 @@ def dumpcsobject_getdatatype(content, objectcache: dict[Any, Any]) -> str:
 
     Gets the data type of a dumpcs object
     """
-    objecttypes = {"class", "struct", "interface", "enum"} # should be a constant!
+    objecttypes = {"class", "struct", "interface", "enum"}  # should be a constant!
     words = objectcache["objectdeclarationwords"]
     datatypewords = []
     for word in words:
@@ -781,10 +849,10 @@ def dumpcs_getobjects(dumpcs: str,
     Does not remove blank lines
     """
     objectdelimiter = "// Namespace: "  # Should be a constant
-    if dumpcs_hasattributes(dumpcs):
+    #if dumpcs_hasattributes(dumpcs):
         #exceptions.warnings.dumpcsattributesnotremoved()
-        raise NotImplementedError("exceptions.warnings.dumpcsattributesnotremoved function does not exist")
-        dumpcs = dumpcs_removeattributes(dumpcs)
+        #raise NotImplementedError("exceptions.warnings.dumpcsattributesnotremoved function does not exist")
+        #dumpcs = dumpcs_removeattributes(dumpcs)
     # Split dumpcs by "// Namespace: ", which can be used to mark the start of each object
     fullobjects = dumpcs.split(objectdelimiter)
     if fullobjects == []:
