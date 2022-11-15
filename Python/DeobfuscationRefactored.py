@@ -4,7 +4,6 @@ import copy
 from typing import *
 import string
 # noinspection PyUnresolvedReferences
-from functools import *
 
 
 def removeattributes(*args, **kwargs):
@@ -64,7 +63,7 @@ def readaftersubstring(sub: str, s: str, lengthwarning=True) -> str:
         to catch bugs)
 
     Return:
-        section of string that comes after the delimiter
+        the partition of the string that comes after the delimiter
     """
     if lengthwarning and len(sub) > len(s):
         raise SyntaxWarning(f"Call to readaftersubstring(sub={sub}, str={s}): \
@@ -100,7 +99,7 @@ def readbeforesubstring(sub: str, s: str, lengthwarning=True) -> str:
         to catch bugs)
 
     Return:
-        section of string that comes before the delimiter
+        the partition of the string that comes before the delimiter
     """
     if lengthwarning and len(sub) > len(s):
         raise SyntaxWarning(f"Call to readaftersubstring(sub={sub}, str={s}): \
@@ -290,7 +289,7 @@ def iswhitespace(s: str, totreatblankaswhitespace=True) -> bool:
         totreatblankaswhitespace: whether to treat "" as whitespace
 
     Return:
-        bool whether string is all whitespace
+        whether string is all whitespace
     """
     if s == "":
         if totreatblankaswhitespace:
@@ -391,7 +390,7 @@ def wordstostring(words: list[str],
         concatenator: the string to put in between words (default space)
 
     Return:
-        string containing all the words concatenated by concatenator (default space)
+        all the words concatenated by concatenator (default space)
     """
     if not(toignoreblankwords or toignorewhitespacewords or totrimwords):
         return concatenator.join(words)
@@ -478,7 +477,7 @@ def linestostring(lines: list[str],
         (only leading / only trailing whitespace is not supported)
 
     Return:
-        string containing all the lines concatenated by new line
+        all the lines concatenated by new line
     """
     return wordstostring(lines, totrimlines, toignoreblanklines, toignoreblanklines, "\n")
 
@@ -498,11 +497,11 @@ def dumpcs_isvalid(dumpcs: str) -> bool:
         dumpcs: the string of the dumpcs file
 
     Return:
-        bool whether the dumpcs is valid
+        whether the dumpcs is valid
     """
-    checks = ("// Image 0:","// Namespace:","class","	// Methods","// RVA: 0x")
+    checks = ("// Image 0:", "// Namespace:", "class", "	// Methods", "// RVA: 0x")
     for check in checks:
-        if not check in dumpcs:
+        if check not in dumpcs:
             return(False)
     return(True)
 
@@ -517,12 +516,12 @@ def dumpcs_checkformat(dumpcs: str) -> list[str]:
         dumpcs: the string of the dumpcs file
 
     Return:
-        List of errors with the line number and error
+        list of errors with the line number and error
     """
     raise NotImplementedError("Dumpcs_checkformat function not completed")
 
 
-def dumpcs_hasattributes(dumpcs: str,fastcheck = False) -> bool:
+def dumpcs_hasattributes(dumpcs: str, fastcheck=False) -> bool:
     # Done
     """
 
@@ -538,7 +537,7 @@ def dumpcs_hasattributes(dumpcs: str,fastcheck = False) -> bool:
         but it is safer to perform a thorough check)
 
     Return:
-        bool whether the dumpcs has attributes
+        whether the dumpcs file has attributes
     """
     if fastcheck:
         return "[CompilerGeneratedAttribute]" in dumpcs
@@ -550,8 +549,8 @@ def dumpcs_hasattributes(dumpcs: str,fastcheck = False) -> bool:
             # If the first non-whitespace character on the line is a square bracket,
             # this means the line is an attribute
             if trimmedline == "" or trimmedline[0] != "[":
-                return(True)
-        return(False)
+                return True
+        return False
 
 
 def dumpcs_constructor(path: str, attributeswarning=False) -> str:
@@ -560,8 +559,9 @@ def dumpcs_constructor(path: str, attributeswarning=False) -> str:
     Possible Improvements:
         1. Setting dumpcs variable after removing attributes makes code more readable and concise,
         but is less inefficient than directing passing result of dumpcs_removeattributes.
-        In addition, attributes must be removed *before* dumpcs is checked for format errors
-        3. Does try except clause make a difference? IDK whether to keep it.
+        In addition, attributes must be removed before dumpcs is checked for format errors
+        2. Directly using dumpcs_removeattributes instead of checking with dumpcs_hasattributes may be faster
+        (idk if it is), but it sacrifices readability
 
     Loads and initializes a dumpcs file
 
@@ -569,16 +569,12 @@ def dumpcs_constructor(path: str, attributeswarning=False) -> str:
         path: the file path of the dumpcs file
         attributeswarning: deprecated, please do not set to true!
 
-    Returns:
-        string containing the contents of the dump.cs file
+    Return:
+        the contents of the dump.cs file
     """
-    #Does this try except clause make a difference? IDK whether to keep it
-#    try:
-#        dumpcs = filehandler.read_file(path)
-#        raise NotImplementedError("filehandler.read_file function does not exist")
-#    except Exception as exception:
-#        raise exception
-#    dumpcs = filehandler.read_file(path)
+    # filehandler.read_file may throw an exception, if this happens we
+    # let it get passed on to the the caller of this function
+#   dumpcs = filehandler.read_file(path)
     raise NotImplementedError("filehandler.read_file function does not exist")
     if not(dumpcs_isvalid(dumpcs)):
         #raise exceptions.errors.invaliddumpcs(path)
@@ -593,7 +589,7 @@ def dumpcs_constructor(path: str, attributeswarning=False) -> str:
 
 
 def dumpcs_removeattributes(dumpcs: str) -> str:
-    #Not done
+    # Done
     """
     Possible Improvements:
         1. Creating a new list of lines is inefficient, modifying existing list would be ideal
@@ -602,13 +598,13 @@ def dumpcs_removeattributes(dumpcs: str) -> str:
 
     Removes attributes from a dumpcs file
     Does not process attributes, only removes them
-    Does not remove blank lines yet
+    Does not remove blank lines
 
     Arguments:
         dumpcs: the string of the dumpcs file
 
-    Returns:
-        string containing dumpcs content with attributes removed
+    Return:
+        dumpcs content with attributes removed
    """
     lines = getlines(dumpcs, False, False)
     newlines = []
@@ -623,146 +619,192 @@ def dumpcs_removeattributes(dumpcs: str) -> str:
     return linestostring(newlines)
 
 
-def dumpcsobject_getnamespace(content: str,
-                              objectcache: dict[Any, Any],
+def dumpcsobject_getnamespace(objectcache: dict[Any, Any],
                               namespacecache: dict[str] = {}) -> str:
     # Yes, the multiple default argument is intentional.
     # It allows us to cache namespaces within this function.
-    # Not Done
+    # Done
     """
-    Docs Not Done!
+
     Possible Improvements:
-        1. Using string.find "\n" and taking a substring is faster than splitting the object into lines,
-        but sacrifices readability and simplicity
-        2. Directly using getlines() instead of using lines variable may be faster, but sacrifices
+        1.  Directly returning instead of using variable may be faster, but sacrifices
         readability and simplicity
-        3.  Directly returning instead of using variable may be faster, but sacrifices
-        readability and simplicity
-        4. Directly using lines[0] instead of using namespaceline variable may be faster, but sacrifices
-        readability and simplicity
+        2. IDK if using a dictionary cache is faster or ironically slower
 
     Gets the namespace of a dumpcs object
+    Uses a dictionary to cache the result
+
+    Example:
+        objectcache.namespaceline: // Namespace: Microsoft.Win32
+        Return: Microsoft.Win32
+
+
+    Arguments:
+        objectcache: dictionary of cached object data for the function to use. Must contain the namespaceline
+        of dumpcs.
+        namespacecache: a dictionary used by the function to cache the result of namespaces. This default
+        argument is mutable to allow for an easy way to store information between function calls. Should not
+        be specified by the caller
+
+    Return:
+        namespace of the dumpcs sobject
     """
-    lines = objectcache["lines"]
-    namespaceline = lines[0]
-    if namespaceline == "// Namespace: ":
+    # Everything after "// Namespace: " in the namespaceline is the object's namespace
+    namespacedelimiter = "// Namespace: "
+    namespaceline = objectcache["namespaceline"]
+    if namespaceline == namespacedelimiter:
         namespace = ""
     else:
         if namespaceline in namespacecache:
             namespace = namespacecache[namespaceline]
         else:
-            namespace = readaftersubstring("// Namespace: ", namespaceline)
+            namespace = readaftersubstring(namespacedelimiter, namespaceline)
             namespacecache[namespaceline] = namespace
     return namespace
 
 
-def dumpcsobject_gettype(content, objectcache: dict[Any, Any]) -> str:
-    # Not Done
+def dumpcsobject_gettype(objectcache: dict[Any, Any]) -> str:
+    # Done
     """
-    Docs Not Done!
+
     Possible Improvements:
-        1. Using string.find "\n" and taking a substring is faster than splitting the object into lines,
+        1.  Directly returning instead of using type variable and breaking loop out of loop may be faster,
         but sacrifices readability and simplicity
-        2. Directly using getlines() instead of using lines variable may be faster, but sacrifices
-        readability and simplicity
-        3.  Directly returning instead of using type variable and breaking loop out of loop may be faster,
-        but sacrifices readability and simplicity
-        4. Directly using lines[1] instead of using objectdeclarationline variable may be faster, but sacrifices
-        readability and simplicity
-        5. Object types should be a constant
+        2. Object types should be a constant
+        3. IDK if using a dictionary cache is faster or ironically slower
 
     Gets the type (struct, class, enum, or interface) of a dumpcs object
+
+    Example:
+        objectcache.objectdeclarationline: public static class Registry // TypeDefIndex: 4
+        Return: class
+
+
+    Arguments:
+        objectcache: dictionary of cached object data for the function to use. Must contain the objectdeclarationline
+        of dumpcs.
+
+    Return:
+        type of the dumpcs object
     """
+    # Find the first word that is a valid type of object in the object declaration line
+    # This is the type of the object
     objecttypes = {"class", "struct", "interface", "enum"}  # should be a constant!
     words = objectcache["objectdeclarationwords"]
     for word in words:
         if word in objecttypes:
             return word
     # Object type (class, struct, enum, interface) not found
-    #exceptions.errors.unexpecteddumpcsformat(f"Could not find type of object:\n{content}")
+    #exceptions.errors.unexpecteddumpcsformat(f"Could not find type of object:\n{objectcache["objectdeclarationwords"]}")
     raise NotImplementedError("exceptions.errors.unexpecteddumpcsformat function does not exist")
 
 
-def dumpcsobject_getdatatype(content, objectcache: dict[Any, Any]) -> str:
-    # Not Done
+def dumpcsobject_getdatatype(objectcache: dict[Any, Any]) -> str:
+    # Done
     """
-    Docs Not Done!
+
     Possible Improvements:
-        1. Using string.find "\n" and taking a substring is faster than splitting the object into lines,
+        1.  Directly returning instead of using type variable and breaking loop out of loop may be faster,
         but sacrifices readability and simplicity
-        2. Directly using getlines() instead of using lines variable may be faster, but sacrifices
-        readability and simplicity
-        3.  Directly returning instead of using data type variable and breaking loop out of loop may be faster,
+        2. Using a string for data type instead of using a list and concatenating it into a string may be faster,
         but sacrifices readability and simplicity
-        4. Directly using lines[1] instead of using objectdeclarationline variable may be faster, but sacrifices
-        readability and simplicity
-        5. Object types should be a constant
-        6. Using a string for data type instead of using a list and concatenating it into a string may be faster,
-        but sacrifices readability and simplicity
+        3. Object types should be a constant
+        4. IDK if using a dictionary cache is faster or ironically slower
 
     Gets the data type of a dumpcs object
+
+    Example:
+        objectcache.objectdeclarationline: public static class Registry // TypeDefIndex: 4
+        Return: public static
+
+
+    Arguments:
+        objectcache: dictionary of cached object data for the function to use. Must contain the objectdeclarationline
+        of dumpcs.
+
+    Return:
+        data type of the dumpcs object
     """
+    # Find everything before the first word that is a valid type of object in the object declaration line
+    # This is the data type of the object
     objecttypes = {"class", "struct", "interface", "enum"}  # should be a constant!
     words = objectcache["objectdeclarationwords"]
     datatypewords = []
     for word in words:
         if word in objecttypes:
+            # Concatenate the words back into a string
             datatype = wordstostring(datatypewords)
             return datatype
         else:
+            # Add this word onto the data type
             datatypewords.append(word)
     # Object type (class, struct, enum, interface) not found
-    #exceptions.errors.unexpecteddumpcsformat(f"Could not find type of object:\n{content}")
+    #exceptions.errors.unexpecteddumpcsformat(f"Could not find type of object:\n{objectcache["objectdeclarationwords"]}")
     raise NotImplementedError("exceptions.errors.unexpecteddumpcsformat function does not exist")
 
 
-def dumpcsobject_getname(content, objectcache: dict[Any, Any]) -> str:
-    # Not Done
+def dumpcsobject_getname(objectcache: dict[Any, Any]) -> str:
+    # Done
     """
-    Docs Not Done!
-    Possible Improvements:
-        1. Using string.find "\n" and taking a substring is faster than splitting the object into lines,
-        but sacrifices readability and simplicity
-        2. Directly using getlines() instead of using lines variable may be faster, but sacrifices
-        readability and simplicity
-        3.  Directly returning instead of using data type variable and breaking loop out of loop may be faster,
-        but sacrifices readability and simplicity
-        4. Directly using lines[1] instead of using objectdeclarationline variable may be faster, but sacrifices
-        readability and simplicity
-        5. Object types should be a constant
-        6. Using a string for data type instead of using a list and concatenating it into a string may be faster,
-        but sacrifices readability and simplicity
 
-    Gets the data type of a dumpcs object
+    Possible Improvements:
+        1. Directly returning instead of using variable may be faster,
+        but sacrifices readability and simplicity
+        2. IDK if using a dictionary cache is faster or ironically slower
+
+    Gets the name of a dumpcs object
+
+    Example:
+        objectcache.objectdeclarationline: public static class Registry // TypeDefIndex: 4
+        Return: Registry
+
+
+    Arguments:
+        objectcache: dictionary of cached object data for the function to use. Must contain the objectdeclarationline
+        of dumpcs.
+
+    Return:
+        name of the dumpcs object
     """
     objectdeclarationline = objectcache["objectdeclarationline"]
     if objectcache["isinherited"]:
+        # If the object is inherited, just return the name of the derived object
         prefix = readbeforesubstring(" : ", objectdeclarationline)
     else:
         prefix = readbeforesubstring(" //", objectdeclarationline)
+    # The name of the object is the last word before the delimiter in the objectdeclarationline
     words = getwords(prefix)
     name = words[len(words) - 1]
     return name
 
 
-def dumpcsobject_getbase(content, objectcache: dict[Any, Any]) -> Union[str, None]:
-    # Not Done
+def dumpcsobject_getbase(objectcache: dict[Any, Any]) -> Optional[str]:
+    # Done
     """
     Docs Not Done!
-    Possible Improvements:
-        1. Using string.find "\n" and taking a substring is faster than splitting the object into lines,
-        but sacrifices readability and simplicity
-        2. Directly using getlines() instead of using lines variable may be faster, but sacrifices
-        readability and simplicity
-        3.  Directly returning instead of using data type variable and breaking loop out of loop may be faster,
-        but sacrifices readability and simplicity
-        4. Directly using lines[1] instead of using objectdeclarationline variable may be faster, but sacrifices
-        readability and simplicity
-        5. Object types should be a constant
-        6. Using a string for data type instead of using a list and concatenating it into a string may be faster,
-        but sacrifices readability and simplicity
 
-    Gets the data type of a dumpcs object
+    Possible Improvements:
+        1. Directly returning instead of using variable may be faster,
+        but sacrifices readability and simplicity
+        2. IDK if using a dictionary cache is faster or ironically slower
+
+    Gets the base class of a dumpcs object
+    If the object is not inherited, returns None
+
+    Examples:
+        objectcache.objectdeclarationline: public static class Registry // TypeDefIndex: 4
+        Return: None
+
+        objectcache.objectdeclarationline: public class DecalsMeshRenderer : MonoBehaviour // TypeDefIndex: 4727
+        Return: MonoBehavior
+
+
+    Arguments:
+        objectcache: dictionary of cached object data for the function to use. Must contain the objectdeclarationline
+        of dumpcs.
+
+    Returns:
+        base class of the dumpcs object, or None if the dumpcs object is not inherited
     """
     objectdeclarationline = objectcache["objectdeclarationline"]
     if not(objectcache["isinherited"]):
@@ -772,48 +814,57 @@ def dumpcsobject_getbase(content, objectcache: dict[Any, Any]) -> Union[str, Non
     return base
 
 
-def dumpcsobject_gettypedefindex(content, objectcache: dict[Any, Any]) -> str:
-    # Not Done
+def dumpcsobject_gettypedefindex(objectcache: dict[Any, Any]) -> str:
+    # Done
     """
-    Docs Not Done!
-    Possible Improvements:
-        1. Using string.find "\n" and taking a substring is faster than splitting the object into lines,
-        but sacrifices readability and simplicity
-        2. Directly using getlines() instead of using lines variable may be faster, but sacrifices
-        readability and simplicity
-        3.  Directly returning instead of using data type variable and breaking loop out of loop may be faster,
-        but sacrifices readability and simplicity
-        4. Directly using lines[1] instead of using objectdeclarationline variable may be faster, but sacrifices
-        readability and simplicity
-        5. Object types should be a constant
-        6. Using a string for data type instead of using a list and concatenating it into a string may be faster,
-        but sacrifices readability and simplicity
 
-    Gets the data type of a dumpcs object
+    Possible Improvements:
+        1. Directly returning instead of using variable may be faster,
+        but sacrifices readability and simplicity
+        2. IDK if using a dictionary cache is faster or ironically slower
+
+    Gets the typedefindex of a dumpcs object
+
+    Example:
+        objectcache.objectdeclarationline: public static class Registry // TypeDefIndex: 4
+        Return: 4
+
+    Arguments:
+        objectcache: dictionary of cached object data for the function to use. Must contain the objectdeclarationline
+        of dumpcs.
+
+    Return:
+        typedefindex of the dumpcs object
     """
     objectdeclarationline = objectcache["objectdeclarationline"]
     typedefindex = readaftersubstring("// TypeDefIndex: ", objectdeclarationline)
     return typedefindex
 
 
-def dumpcsobject_isinherited(content, objectcache: dict[Any, Any]) -> bool:
+def dumpcsobject_isinherited(objectcache: dict[Any, Any]) -> bool:
     # Not Done
     """
-    Docs Not Done!
-    Possible Improvements:
-        1. Using string.find "\n" and taking a substring is faster than splitting the object into lines,
-        but sacrifices readability and simplicity
-        2. Directly using getlines() instead of using lines variable may be faster, but sacrifices
-        readability and simplicity
-        3.  Directly returning instead of using data type variable and breaking loop out of loop may be faster,
-        but sacrifices readability and simplicity
-        4. Directly using lines[1] instead of using objectdeclarationline variable may be faster, but sacrifices
-        readability and simplicity
-        5. Object types should be a constant
-        6. Using a string for data type instead of using a list and concatenating it into a string may be faster,
-        but sacrifices readability and simplicity
 
-    Gets the data type of a dumpcs object
+    Possible Improvements:
+        1. Directly returning instead of using variable may be faster,
+        but sacrifices readability and simplicity
+        2. IDK if using a dictionary cache is faster or ironically slower
+
+    Gets whether a dumpcs object is inherited
+
+    Examples:
+        objectcache.objectdeclarationline: public static class Registry // TypeDefIndex: 4
+        Return: False
+
+        objectcache.objectdeclarationline: public class DecalsMeshRenderer : MonoBehaviour // TypeDefIndex: 4727
+        Return: True
+
+    Arguments:
+        objectcache: dictionary of cached object data for the function to use. Must contain the objectdeclarationline
+        of dumpcs.
+
+    Return:
+        whether the dumpcs object is inherited
     """
     objectdeclarationline = objectcache["objectdeclarationline"]
     return " : " in objectdeclarationline
@@ -821,9 +872,9 @@ def dumpcsobject_isinherited(content, objectcache: dict[Any, Any]) -> bool:
 
 def dumpcs_getobjects(dumpcs: str,
                       createtypemodels=True,
-                      objecttypefilter: Union[set[str], None] = None,
-                      namespacefilter: Union[set[str], None] = None,
-                      customfilter: Union[Callable, None] = None) -> list[dict]:
+                      objecttypefilter: Optional[set[str]] = None,
+                      namespacefilter: Optional[set[str]] = None,
+                      customfilter: Optional[Callable] = None) -> list[dict]:
     #Not Done
     """
     Docs Not Done!
@@ -835,29 +886,43 @@ def dumpcs_getobjects(dumpcs: str,
         is faster, but logner
         4. Directly creating a dictionary may be faster than using variables for namespacefilter
         and objecttypefilter, but sacrifices readability and simplicity
-        5. To save memory and speed, maybe only add object base if it exists. However, this
-        sacrifices readability and simplicity
-        6. Setting object's type model to None decreases errors and complexity, but
-        takes up extra memory and sacrifices speed
+        5. To save memory and speed, maybe only add object base if it exists rather than adding None.
+        However, this sacrifices readability and simplicity
+        6. To save memory and speed, maybe only add object type model if it exists rather than adding None.
+        However, this sacrifices readability and simplicity
         7. Returning a dictionary of objects by path (namespace -> object) may be faster and simpler than
         returning a list of dictionaries (as to grab an object out of the list by its path, the list must be
         iterated through until a match is found), but a list is simpler, easier, and faster to create,
         process, and iterate over
         8. Object delimiter should be a constant
+        9. Supplying content and objectcache parameters to all functions, whether they use them or not,
+        is good for consistency, readability, and refactoring, but sacrifices speed and memory
 
     Parses dumpcs file into a list of objects
     Does not remove blank lines
+
+    Arguments:
+        dumpcs: the contents of the dumpcs file
+        createtypemodels: whether to create type models for objects
+        objecttypefilter: filter to only process objects of certain types (set to None to disable filter)
+        namespacefilter: filter to only process objects that are in certain namespaces
+        (set to None to disable filter)
+        customfilter: filter that is supplied the finished object dictionary and tells the function to only
+        process objects that satisfy custom conditions (set to None to disable filter)
+
+    Return:
+        list of parsed objects from the dumpcs file
     """
     objectdelimiter = "// Namespace: "  # Should be a constant
-    #if dumpcs_hasattributes(dumpcs):
-        #exceptions.warnings.dumpcsattributesnotremoved()
-        #raise NotImplementedError("exceptions.warnings.dumpcsattributesnotremoved function does not exist")
-        #dumpcs = dumpcs_removeattributes(dumpcs)
+    if dumpcs_hasattributes(dumpcs):
+        exceptions.warnings.dumpcsattributesnotremoved()
+        raise NotImplementedError("exceptions.warnings.dumpcsattributesnotremoved function does not exist")
+        dumpcs = dumpcs_removeattributes(dumpcs)
     # Split dumpcs by "// Namespace: ", which can be used to mark the start of each object
     fullobjects = dumpcs.split(objectdelimiter)
     if fullobjects == []:
         # If there aren't any objects in dumpcs (this is impossible, but just theoretically),
-        # we can terminate the function now to keep it simple
+        # we can terminate the function now
         return []
     # The split function will capture everything before the first object
     # since we split by the delimiter that starts objects, so delete that
@@ -865,14 +930,16 @@ def dumpcs_getobjects(dumpcs: str,
     # Build dictionary of objects from full objects
     objects = []
     for fullobject in fullobjects:
-        # Create a cache of repetitive function calls so we only have to calculate them once
+        # Create a cache of repetitive function calls so we only have to do them once
         objectcache = {}
         # Add "// Namespace: " back on, as string.split excludes the delimiter
         content = objectdelimiter + fullobject
         lines = getlines(content)
         objectcache["lines"] = lines
-        # We only need lines cached to calculate namespace
-        namespace = dumpcsobject_getnamespace(content, objectcache)
+        namespaceline = lines[0]
+        objectcache["namespaceline"] = namespaceline
+        # We only need namespaceline cached to find the object's namespace
+        namespace = dumpcsobject_getnamespace(objectcache)
         # Exit early on namespacefilter to save some work
         if namespacefilter is not None and not(namespace in namespacefilter):
             continue
@@ -880,22 +947,22 @@ def dumpcs_getobjects(dumpcs: str,
         objectcache["objectdeclarationline"] = objectdeclarationline
         objectcache["objectdeclarationwords"] = getwords(objectdeclarationline)
         # The name objecttype is used because type is a keyword
-        objecttype = dumpcsobject_gettype(content, objectcache)
+        objecttype = dumpcsobject_gettype(objectcache)
         # Exit early on objecttypefilter to save some work
         if objecttypefilter is not None and not (objecttype in objecttypefilter):
             continue
-        isinherited = dumpcsobject_isinherited(content, objectcache)
+        isinherited = dumpcsobject_isinherited(objectcache)
         objectcache["isinherited"] = isinherited
-        name = dumpcsobject_getname(content, objectcache)
-        datatype = dumpcsobject_getdatatype(content, objectcache)
+        name = dumpcsobject_getname(objectcache)
+        datatype = dumpcsobject_getdatatype(objectcache)
         if isinherited:
-            base = dumpcsobject_getbase(content, objectcache)
+            base = dumpcsobject_getbase(objectcache)
         else:
             base = None
-        typedefindex = dumpcsobject_gettypedefindex(content, objectcache)
-        methods = dumpcsobject_getmethods(content, objectcache)
-        fields = dumpcsobject_getfields(content, objectcache)
-        properties = dumpcsobject_getproperties(content, objectcache)
+        typedefindex = dumpcsobject_gettypedefindex(objectcache)
+        methods = dumpcsobject_getmethods(objectcache)
+        fields = dumpcsobject_getfields(objectcache)
+        properties = dumpcsobject_getproperties(objectcache)
         #The name Object is capitalized because object is a keyword in python
         Object = {
             "content": content,
@@ -911,11 +978,10 @@ def dumpcs_getobjects(dumpcs: str,
             "base": base,
         }
         # Now that we have all the object's data, we can check against custom filter.
-        # This allows us to avoid creating the object's type model if the object is going to be ignored
         if customfilter is not None and not(customfilter(Object)):
             continue
         if createtypemodels:
-            # Create type model from the object's data, then add it to the object
+            # Create type model from the object's data, then append the type model to the object's data
             typemodel = buildtypemodel(Object)
             Object["typemodel"] = typemodel
         else:
