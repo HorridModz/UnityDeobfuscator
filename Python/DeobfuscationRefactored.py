@@ -1,9 +1,10 @@
 import sys
-# noinspection PyUnresolvedReferences
+import warnings
 import copy
 from typing import *
 import string
-# noinspection PyUnresolvedReferences
+from functools import cache, lru_cache
+from typing import List, Any, Union
 
 
 def removeattributes(*args, **kwargs):
@@ -66,8 +67,8 @@ def readaftersubstring(sub: str, s: str, lengthwarning=True) -> str:
         the partition of the string that comes after the delimiter
     """
     if lengthwarning and len(sub) > len(s):
-        raise SyntaxWarning(f"Call to readaftersubstring(sub={sub}, str={s}): \
-         substring is longer than full string")
+        warnings.warn(f"Call to readaftersubstring(sub={1}, str={2}): substring is longer than full string",
+                      SyntaxWarning)
     prefix, found, suffix = s.partition(sub)
     if not found:
         suffix = prefix
@@ -102,8 +103,8 @@ def readbeforesubstring(sub: str, s: str, lengthwarning=True) -> str:
         the partition of the string that comes before the delimiter
     """
     if lengthwarning and len(sub) > len(s):
-        raise SyntaxWarning(f"Call to readaftersubstring(sub={sub}, str={s}): \
-         substring is longer than full string")
+        warnings.warn(f"Call to readbeforesubstring(sub={1}, str={2}): substring is longer than full string",
+                      SyntaxWarning)
     prefix, found, suffix = s.partition(sub)
     if not found:
         prefix = suffix
@@ -619,10 +620,12 @@ def dumpcs_removeattributes(dumpcs: str) -> str:
     return linestostring(newlines)
 
 
-def dumpcsobject_getnamespace(objectcache: dict[Any, Any],
-                              namespacecache: dict[str] = {}) -> str:
+def dumpcsobject_getnamespace(objectcache: dict, namespacecache: dict[str] = {}) -> str:
     # Yes, the multiple default argument is intentional.
     # It allows us to cache namespaces within this function.
+    # Functools cache is insufficient because it only caches input and output of the function.
+    # Our input itself, the dictionary, will vary, while the namespaceline
+    # of the dictionary will often be the same. Namespaceline is all we care about, so we cache it ourselves.
     # Done
     """
 
@@ -663,7 +666,7 @@ def dumpcsobject_getnamespace(objectcache: dict[Any, Any],
     return namespace
 
 
-def dumpcsobject_gettype(objectcache: dict[Any, Any]) -> str:
+def dumpcsobject_gettype(objectcache: dict) -> str:
     # Done
     """
 
@@ -699,7 +702,7 @@ def dumpcsobject_gettype(objectcache: dict[Any, Any]) -> str:
     raise NotImplementedError("exceptions.errors.unexpecteddumpcsformat function does not exist")
 
 
-def dumpcsobject_getdatatype(objectcache: dict[Any, Any]) -> str:
+def dumpcsobject_getdatatype(objectcache: dict) -> str:
     # Done
     """
 
@@ -743,7 +746,7 @@ def dumpcsobject_getdatatype(objectcache: dict[Any, Any]) -> str:
     raise NotImplementedError("exceptions.errors.unexpecteddumpcsformat function does not exist")
 
 
-def dumpcsobject_getname(objectcache: dict[Any, Any]) -> str:
+def dumpcsobject_getname(objectcache: dict) -> str:
     # Done
     """
 
@@ -778,7 +781,7 @@ def dumpcsobject_getname(objectcache: dict[Any, Any]) -> str:
     return name
 
 
-def dumpcsobject_getbase(objectcache: dict[Any, Any]) -> Optional[str]:
+def dumpcsobject_getbase(objectcache: dict) -> Optional[str]:
     # Done
     """
     Docs Not Done!
@@ -814,7 +817,7 @@ def dumpcsobject_getbase(objectcache: dict[Any, Any]) -> Optional[str]:
     return base
 
 
-def dumpcsobject_gettypedefindex(objectcache: dict[Any, Any]) -> str:
+def dumpcsobject_gettypedefindex(objectcache: dict) -> str:
     # Done
     """
 
@@ -841,8 +844,8 @@ def dumpcsobject_gettypedefindex(objectcache: dict[Any, Any]) -> str:
     return typedefindex
 
 
-def dumpcsobject_isinherited(objectcache: dict[Any, Any]) -> bool:
-    # Not Done
+def dumpcsobject_isinherited(objectcache: dict) -> bool:
+    # Done
     """
 
     Possible Improvements:
@@ -850,7 +853,7 @@ def dumpcsobject_isinherited(objectcache: dict[Any, Any]) -> bool:
         but sacrifices readability and simplicity
         2. IDK if using a dictionary cache is faster or ironically slower
 
-    Gets whether a dumpcs object is inherited
+    Determines whether a dumpcs object is inherited
 
     Examples:
         objectcache.objectdeclarationline: public static class Registry // TypeDefIndex: 4
@@ -868,6 +871,266 @@ def dumpcsobject_isinherited(objectcache: dict[Any, Any]) -> bool:
     """
     objectdeclarationline = objectcache["objectdeclarationline"]
     return " : " in objectdeclarationline
+
+
+def dumpcsobject_gethasmethods(fullobject: str) -> bool:
+    return "\t// Methods" in fullobject
+
+
+def dumpcsobject_getmethods(fullobject: str) -> list[dict]:
+    # Not Done
+    """
+
+    Possible Improvements:
+
+    Gets a list of methods from a dumpcs object
+    Includes dictionary of GenericInstMethods in each method
+
+    fullobject: the content of the dumpcs object
+
+    Return:
+        list of methods in the dumpcs object
+    """
+    # Get the methods section of the dumpcs object
+    if not dumpcsobject_gethasmethods(fullobject):
+        # No Methods
+        return []
+    assert "\n\t// Methods" in fullobject
+    suffix = readaftersubstring("\n\t// Methods", fullobject)
+    checks = ("\n\t// Fields", "\n\t// Properties")
+    found = False
+    for check in checks:
+        if check in suffix:
+            methodssection = readbeforesubstring(f"\n{check}",suffix)
+            found = True
+            break
+    if not found:
+        assert "\n}" in suffix
+        methodssection = suffix[0:len(suffix) - len("\n}")]
+    methoddelimiter = "\n\n"  # Should be a constant
+    # Split methoddelimiter by "\n\n", which can be used to mark the start of each method
+    fullmethods = methodssection.split(methoddelimiter)
+    if fullmethods == []:
+        return []
+    print(f"TEST: is fullmethods[0] garbage or a method?{fullmethods[0]}")
+    ## The split function will capture everything before the first method
+    ## since we split by the delimiter that starts methods, so delete that
+    #del fullmethods[0]
+    # Build dictionary of methods from full methods
+    methods = []
+    for fullmethod in fullmethods:
+        name = dumpcsobject_method_getname(fullmethod)
+        datatype = dumpcsobject_method_getdatatype(fullmethod)
+        hasslot = dumpcsobject_method_gethasslot(fullmethod)
+        if hasslot:
+            slot = dumpcsobject_method_getslot(fullmethod)
+        else:
+            slot = None
+        isgeneric = dumpcsobject_method_getisgeneric(fullmethod)
+        if isgeneric:
+            genericinstmethods = dumpcsobject_method_getgenericinstmethods(fullmethod)
+        else:
+            #genericinstmethods = None
+            genericinstmethods = []
+        hasoffsetdata = dumpcsobject_method_gethasoffsetdata # Offset -1 if not
+        if hasoffsetdata:
+            rsomethingidkvirtualaddress = dumpcsobject_method_getrsomethingidkvirtualaddress #RVA
+            virtualaddress = dumpcsobject_method_getvirtualaddress #VA
+            offset = dumpcsobject_method_getoffset #Offset
+        else:
+            rsomethingidkvirtualaddress = None  # RVA
+            virtualaddress = None  # VA
+            offset = None  # Offset
+        params = dumpcsobject_method_getparams(fullmethod)
+        method = {
+            "content": fullmethod,
+            "name": name,
+            "datatype": datatype,
+            "hasslot": hasslot,
+            "slot": slot,
+            "hasoffsetdata": hasoffsetdata,
+            "rsomethingidkvirtualaddress": rsomethingidkvirtualaddress,
+            "virtualaddress": virtualaddress,
+            "offset": offset,
+            "params": params,
+            "isgeneric": isgeneric,
+            "genericinstmethods": genericinstmethods,
+                }
+        methods.append(method)
+    return methods
+
+
+def dumpcsobject_method_getname(fullmethod: str) -> str:
+    # Not Done
+    pass
+
+
+def dumpcsobject_method_getdatatype(fullmethod: str) -> str:
+    # Not Done
+    pass
+
+
+def dumpcsobject_method_gethasslot(fullmethod: str) -> bool:
+    # Not Done
+    return " Slot: " in fullmethod
+
+
+def dumpcsobject_method_getslot(fullmethod: str) -> str:
+    # Not Done
+    pass
+
+
+def dumpcsobject_method_getisgeneric(fullmethod: str) -> bool:
+    # Not Done
+    return "\t/* GenericInstMethod :" in fullmethod
+
+
+def dumpcsobject_method_gethasoffsetdata(fullmethod: str) -> bool:
+    # Not Done
+    return " Offset: -1 " not in fullmethod
+
+
+def dumpcsobject_method_getrsomethingidkvirtualaddress(fullmethod: str) -> str:
+    # Not Done
+    pass
+
+
+def dumpcsobject_method_getoffset(fullmethod: str) -> str:
+    # Not Done
+    pass
+
+
+def dumpcsobject_method_getvirtualaddress(fullmethod: str) -> str:
+    # Not Done
+    pass
+
+
+def dumpcsobject_method_getgenericinstmethods(fullmethod: str) -> list[dict]:
+    # Not Done
+    """
+
+    Possible Improvements:
+
+    Gets a list of generic inst methods from a dumpcs method
+
+    fullmethod: the content of the dumpcs method
+
+    Return:
+        list of generic inst methods in the dumpcs object
+    """
+    # Get the genericinstmethods section of the dumpcs method
+    if not dumpcsobject_method_getgenericinstmethods(fullmethod):
+        # No genericinstmethods
+        return []
+    assert "\t/* GenericInstMethod :" in fullmethod
+    suffix = readaftersubstring("\t/* GenericInstMethod :\n", fullmethod)
+    assert "\n\t*/" in suffix
+    genericinstmethodssection = readbeforesubstring("\n\t*/", suffix)
+    genericinstmethoddelimiter = "\n\t|\n"  # Should be a constant
+    # Split genericinstmethodssection by ", ", which can be used to mark the start of each genericinstmethod
+    fullgenericinstmethods = genericinstmethodssection.split(genericinstmethoddelimiter)
+    if fullgenericinstmethods == []:
+        return []
+    print(f"TEST: is fullgenericinstmethods[0] garbage or a method?{fullgenericinstmethods[0]}")
+    ## The split function will capture everything before the first genericinstmethod
+    ## since we split by the delimiter that starts genericinstmethod, so delete that
+    # del fullgenericinstmethods[0]
+    # Build dictionary of genericinstmethods from full genericinstmethods
+    genericinstmethods = []
+    for fullgenericinstmethod in fullgenericinstmethods:
+        genericinstmethod = {
+                            }
+        genericinstmethods.append(genericinstmethod)
+    return genericinstmethods
+
+
+def dumpcsobject_method_getparams(fullmethod: str) -> list[dict]:
+    # Not Done
+    """
+
+    Possible Improvements:
+
+    Gets a list of params from a dumpcs method
+
+    fullmethod: the content of the dumpcs method
+
+    Return:
+        list of params in the dumpcs object
+    """
+    # Get the params section of the dumpcs method
+    lines = getlines(fullmethod)
+    methoddeclarationline = lines[1]
+    assert "(" in methoddeclarationline
+    suffix = readaftersubstring("(", methoddeclarationline)
+    assert "(" in suffix
+    paramssection = readbeforesubstring(")", suffix)
+    paramdelimiter = ", "  # Should be a constant
+    # Split paramssection by ", ", which can be used to mark the start of each param
+    fullparams = paramssection.split(paramdelimiter)
+    if fullparams == []:
+        return []
+    # Build dictionary of params from full params
+    params = []
+    for fullparam in fullparams:
+        name = dumpcsobject_method_param_getname(fullparam)
+        datatype = dumpcsobject_method_param_getdatatype(fullparam)
+        hasdefault = dumpcsobject_method_param_gethasdefault(fullparam)
+        if hasdefault:
+            default = dumpcsobject_method_param_getdefault(fullparam)
+        else:
+            default = None
+        param = {
+            "content": fullparam,
+            "datatype": datatype,
+            "hasdefault": hasdefault,
+            "default": default,
+        }
+        params.append(param)
+    return params
+
+
+def dumpcsobject_method_param_getname(fullparam: str) -> str:
+    # Not Done
+    if dumpcsobject_method_param_gethasdefault(fullparam):
+        fullparam = readbeforesubstring(" = ", fullparam)
+    words = getwords(fullparam)
+    try:
+        assert len(words) > 1
+    except AssertionError:
+        # exceptions.errors.unexpecteddumpcsformat(f"Error go brrrr")
+        raise NotImplementedError("exceptions.errors.unexpecteddumpcsformat function does not exist")
+    # The name of the param is the last word
+    name = words[len(words) - 1]
+    return name
+
+
+def dumpcsobject_method_param_getdatatype(fullparam: str) -> str:
+    # Not Done
+    if dumpcsobject_method_param_gethasdefault(fullparam):
+        fullparam = readbeforesubstring(" = ", fullparam)
+    words = getwords(fullparam)
+    try:
+        assert len(words) > 1
+    except AssertionError:
+        # exceptions.errors.unexpecteddumpcsformat(f"Error go brrrr")
+        raise NotImplementedError("exceptions.errors.unexpecteddumpcsformat function does not exist")
+    # The data type is everything but the last word (which is the param name)
+    del words[len(words) - 1]
+    # Concatenate the words back into a string
+    datatype = wordstostring(words)
+    return datatype
+
+
+def dumpcsobject_method_param_gethasdefault(fullparam: str) -> bool:
+    # Not Done
+    return " = " in fullparam
+
+
+def dumpcsobject_method_param_getdefault(fullparam: str) -> str:
+    # Not Done
+    assert " = " in fullparam
+    default = readaftersubstring(" = ", fullparam)
+    return default
 
 
 def dumpcs_getobjects(dumpcs: str,
@@ -913,17 +1176,22 @@ def dumpcs_getobjects(dumpcs: str,
     Return:
         list of parsed objects from the dumpcs file
     """
-    objectdelimiter = "// Namespace: "  # Should be a constant
+    objectdelimiter = "\n// Namespace: "  # Should be a constant
     if dumpcs_hasattributes(dumpcs):
-        exceptions.warnings.dumpcsattributesnotremoved()
+        #exceptions.warnings.dumpcsattributesnotremoved()
         raise NotImplementedError("exceptions.warnings.dumpcsattributesnotremoved function does not exist")
         dumpcs = dumpcs_removeattributes(dumpcs)
     # Split dumpcs by "// Namespace: ", which can be used to mark the start of each object
     fullobjects = dumpcs.split(objectdelimiter)
-    if fullobjects == []:
-        # If there aren't any objects in dumpcs (this is impossible, but just theoretically),
-        # we can terminate the function now
-        return []
+    #if fullobjects == []:
+    #    # If there aren't any objects in dumpcs (this is impossible, but just theoretically),
+    #    # we can terminate the function now
+    #    return []
+    try:
+        assert fullobjects != []
+    except AssertionError:
+        # exceptions.errors.unexpecteddumpcsformat(f"Error go brrrr")
+        raise NotImplementedError("exceptions.errors.unexpecteddumpcsformat function does not exist")
     # The split function will capture everything before the first object
     # since we split by the delimiter that starts objects, so delete that
     del fullobjects[0]
@@ -933,8 +1201,8 @@ def dumpcs_getobjects(dumpcs: str,
         # Create a cache of repetitive function calls so we only have to do them once
         objectcache = {}
         # Add "// Namespace: " back on, as string.split excludes the delimiter
-        content = objectdelimiter + fullobject
-        lines = getlines(content)
+        fullobject = objectdelimiter + fullobject
+        lines = getlines(fullobject)
         objectcache["lines"] = lines
         namespaceline = lines[0]
         objectcache["namespaceline"] = namespaceline
@@ -960,20 +1228,38 @@ def dumpcs_getobjects(dumpcs: str,
         else:
             base = None
         typedefindex = dumpcsobject_gettypedefindex(objectcache)
-        methods = dumpcsobject_getmethods(objectcache)
-        fields = dumpcsobject_getfields(objectcache)
-        properties = dumpcsobject_getproperties(objectcache)
+        hasmethods = dumpcsobject_gethasmethods(fullobject)
+        if hasmethods:
+            methods = dumpcsobject_getmethods(fullobject)
+        else:
+            #methods = None
+            methods = []
+        hasfields = dumpcsobject_gethasfields(fullobject)
+        if hasfields:
+            fields = dumpcsobject_getfields(fullobject)
+        else:
+            # fields = None
+            fields = []
+        hasproperties = dumpcsobject_gethasproperties(fullobject)
+        if hasproperties:
+            properties = dumpcsobject_getproperties(fullobject)
+        else:
+            # properties = None
+            properties = []
         #The name Object is capitalized because object is a keyword in python
         Object = {
-            "content": content,
+            "content": fullobject,
             "name": name,
             "typedefindex": typedefindex,
             "type": objecttype,
             "namespace": namespace,
             "datatype": datatype,
             "isinherited": isinherited,
+            "hasmethods": hasmethods,
             "methods": methods,
+            "hasfields": hasfields,
             "fields": fields,
+            "hasproperties": hasproperties,
             "properties": properties,
             "base": base,
         }
@@ -988,3 +1274,12 @@ def dumpcs_getobjects(dumpcs: str,
             Object["typemodel"] = None
         objects.append(Object)
     return objects
+
+
+def dumpcs_getimages(dumpcs: str) -> list[dict]:
+    #Not Done
+    """
+    Docs Not Done!
+    Possible Improvements:
+    """
+    raise NotImplementedError("dumpcs_getimages function does not exist")

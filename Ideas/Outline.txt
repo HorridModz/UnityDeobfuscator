@@ -39,6 +39,8 @@ when processing other items)
 -Change internal settings like size weight and field weight
 -Configure how to order classes / fields / methods etc.: Keep order of obfuscated, reorder to match unobfuscated,
 sort alphabetically, etc.
+-Enable / disable type weight
+-Configure type weight (eg: whether method is virtual may be very heavy)
 
 Deobfuscation Methods:
 # - Brute Force Deobfuscation (Comparitive Deobfuscation) : A deobfuscation method that works by comparing unobfuscated and obfuscated dump.cs. It finds the class or member etc. by name. Then, it takes the class, and replaces the names and dynamic values with a certain string ('offset','methodname','classname','comment',etc.). This way, things such as data types, params, # of methods and fields, etc. can be compared. It then converts this into lists of methods, and each method has its method type, and the method params. Same is done on fields and class itself. There is a strikes system with a customizable strictness. It can automatically adapt by narrowing down the perfect strictness by moving it up and down and seeing how little results it can get while still getting results (the toggleable smart mode, changeable in settings or function parameters). This method takes a long time.
