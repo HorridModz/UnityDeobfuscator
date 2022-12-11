@@ -3,6 +3,7 @@ whether object is inherited ("class a: b" vs "class a") = is inherited (CURRENT 
 base object in inherited object = base object (if none, it is set to None)
 
 type of object ("struct", "class", "interface", "enum") = object type (CURRENT NAME IS "user-defined type" MUST CHANGE)
+Called "objecttype" instead of "type" because "type" is a keyword in python
 
 "public" in "public class classname: baseclass" or "private" in "private enum enumname" = object data type (CURRENT NAME IS "object type" MUST CHANGE)
 
@@ -19,26 +20,19 @@ how many methods / fields / properties are in object = object size
 
 user-definedtype / unity type / primitive type (including complex types) = data type (CURRENT NAME IS "type" MUST CHANGE)
 
-Content of // Methods = methods content
+Content of // Methods = methodssection
 Each method = method
-Content of "/* GenericInstMethod :" = genericintsmethods
-Each genericinstmethod = genericinstmethod
-Content of // Fields = fields content
+Content of "/* GenericInstMethod :" = generics
+Each generic = generic
+Content of // Fields = fieldssection
 Each field = field
-Content of // Properties = properties content
+Content of // Properties = propertiessection
 Each property = property
-
-"List<string>", "Dictionary<bool,int> etc. = generic (CURRENT NAME IS "data type group" MUST CHANGE)
-"{ get; set}" in "public static int propety { get; set}" = property method (CURRENT NAME IS "property attribute" MUST CHANGE)
-
-"// RVA: 0x1 Offset: 0x1 VA: 0x1" = offset string
-""// 0x1" = field offset string
-"1" in "internal int field = 1 // 0x1" = field value (if none, it is set to None)
-"0x1" = offset  (if none, it is set to None)
+Called "Property" instead of "property" because "property" is a keyword in python
 
 "int i = 1" in "function(int i = 1)" or "int a" in "function(int a,bool b=true)" = parameter / param
 "1" in "function(int i = 1)" = default argument (if none, it is set to None)
-"int " in "function(int a,bool b=true)" = parameter type / param type
+"int " in "function(int a,bool b=true)" = parameter data type / param data type
 "a" in "function(int a,bool b=true)" = parameter name / param name
 
 "1" in "TypeDefIndex: 1" = typedefindex
@@ -80,3 +74,4 @@ class classname // TypeDefIndex: 1
 	public int field;
 }"
 etc. = object
+Called "Object" instead of "object" because "object" is a keyword in python

@@ -1,11 +1,14 @@
-1. Copy python code
-2. Remove unnecessary python code
+1 (Done). Copy python code
+2 (Done). Remove unnecessary python code
 3. Refactor python code, add type hints, and add comments
 4. Test refactored code
-5. Group refactored code into hierarchy of classes and files, change data structures, and choose better names
-6. Test reformatted code
-7. Make python code statically typed
-8. Step statically typed code
-9. Port python code to c++
-10. Test c++ code
-11. Diagnose and optimize c++ code
+5. Add documentation
+6. Refactor refactored code
+7. Test refactored refactored code
+8. Group refactored code into hierarchy of classes and files, change data structures, and choose better names
+9. Test reformatted code
+10. Make python code statically typed
+11. Test statically typed code
+12. Port python code to c++
+13. Test c++ code
+14. Diagnose and optimize c++ code
