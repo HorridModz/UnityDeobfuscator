@@ -1,3 +1,4 @@
+from __future__ import annotations
 import sys
 import os
 import warnings
@@ -7,10 +8,12 @@ import string
 import re
 import json
 from functools import cache, lru_cache
-from typing import List, Any, Union
-from exceptions import *
+from typing import Any
+from unitydeobfuscatorexceptions import *
+import fileutils
 
 
+filehandler = fileutils.FileHandler()
 def removeattributes(*args, **kwargs):
     """
     Function has been removed
@@ -295,7 +298,7 @@ def iswhitespace(s: str, totreatblankaswhitespace=True) -> bool:
     Example:
         String: "
              "
-        Return: true
+        Return: True
 
         String: "   hello world!
             hi"
@@ -323,8 +326,8 @@ def trim(s: str, leading=True, trailing=True) -> str:
     Example:
         String: "   hello world!
         "
-        Leading: true
-        Trailing: true
+        Leading: True
+        Trailing: True
         Return: "hello world!"
 
     Arguments:
@@ -438,8 +441,8 @@ def getlines(s: str,
                     b
 
                  c  "
-        toremoveblanklines: true
-        totrimlines: true
+        toremoveblanklines: True
+        totrimlines: True
         Return: ["a","b","c"]
 
     Arguments:
@@ -534,7 +537,7 @@ def dumpcs_isvalid(dumpcs: str) -> bool:
     return True
 
 
-def dumpcs_checkformat(dumpcs: str) -> list[str]:
+def dumpcs_checkformat(dumpcs: str) -> list[dict]:
     #Not done
     """
     Scan dump.cs for unexpected formatting
@@ -544,7 +547,7 @@ def dumpcs_checkformat(dumpcs: str) -> list[str]:
         dumpcs: the content of the dumpcs file
 
     Return:
-        list of errors with the line number and error
+        list of errors with the line number and error message
     """
     raise NotImplementedError("Dumpcs_checkformat function not completed")
 
@@ -599,10 +602,7 @@ def dumpcs_constructor(path: str) -> str:
     Return:
         the contents of the dump.cs file
     """
-    # filehandler.read_file may throw an exception, if this happens we
-    # let it get passed on to the the caller of this function
-#   dumpcs = filehandler.read_file(path)
-    raise NotImplementedError("filehandler.read_file function does not exist")
+    dumpcs = filehandler.read_file(path)
     if not dumpcs_isvalid(dumpcs):
         raise InvalidDumpcsError(path)
     if dumpcs_hasattributes(dumpcs):
@@ -653,7 +653,7 @@ def dumpcsobject_hasnamespace(fullobject: str) -> bool:
     return namespaceline != "// Namespace: "
 
 
-def dumpcsobject_getnamespace(fullobject: str) -> str:
+def dumpcsobject_getnamespace(fullobject: str) -> Optional[str]:
     # Done
     """
 
@@ -743,7 +743,6 @@ def dumpcsobject_getdatatype(fullobject: str) -> str:
 
     Arguments:
         fullobject: the content of the dumpcs object
-        of dumpcs.
 
     Return:
         data type of the dumpcs object
@@ -772,7 +771,7 @@ def dumpcsobject_getdatatype(fullobject: str) -> str:
     raise UnexpectedDumpcsFormatError("Could not find type of object", fullobject)
 
 
-def dumpcsobject_getname(fullobject: str) -> str:
+def dumpcsobject_getname(fullobject: str, includenesting=False) -> str:
     # Done
     """
 
@@ -783,14 +782,20 @@ def dumpcsobject_getname(fullobject: str) -> str:
 
     Gets the name of a dumpcs object
 
-    Example:
-        objectdeclarationline: public static class Registry // TypeDefIndex: 4
-        Return: Registry
+    Examples:
+        objectdeclarationline: private enum SimpleCollator.ExtenderType // TypeDefIndex: 41
+        includenesting: True
+        Return: SimpleCollator.ExtenderType
+
+        objectdeclarationline: private enum SimpleCollator.ExtenderType // TypeDefIndex: 41
+        includenesting: False
+        Return: ExtenderType
 
 
     Arguments:
         fullobject: the content of the dumpcs object
-        of dumpcs.
+        includenesting: whether to include the outer objects in the name
+        (only applies if the object is nested)
 
     Return:
         the name of the dumpcs object
@@ -818,7 +823,13 @@ def dumpcsobject_getname(fullobject: str) -> str:
     # The name of the object is the last word before the delimiter in the objectdeclarationline
     words = getwords(prefix)
     assert len(words) > 1
-    name = words[-1]
+    fullname = words[-1] #including nesting (if any)
+    if includenesting:
+        name = fullname
+    else:
+        nesting = fullname.split(".")
+        # Last element is the name of the object (without nesting, if any)
+        name = nesting[-1]
     return name
 
 
@@ -845,7 +856,6 @@ def dumpcsobject_getbase(fullobject: str) -> Optional[str]:
 
     Arguments:
         fullobject: the content of the dumpcs object
-        of dumpcs.
 
     Returns:
         base class of the dumpcs object, or None if the dumpcs object is not inherited
@@ -866,6 +876,42 @@ def dumpcsobject_getbase(fullobject: str) -> Optional[str]:
         prefix = prefix.replace(TEMPREPLACEMENT, "<>")
     base = prefix
     return base
+
+
+def dumpcsobject_getnesting(fullobject: str, includename=False, innertoouter=True) -> tuple:
+    # Not Done
+    # Ex: a.b.c -> (c, b, a)
+    fullname = dumpcsobject_getname(fullobject, includenesting=True) # including nesting (if any)
+    nesting = fullname.split(".")
+    if not includename:
+        # Remove last element as this is the name of the object (without nesting, if any)
+        del nesting[-1]
+    if innertoouter:
+        # Reverse the list to make the order go from inner to outer rather than outer to inner
+        nesting.reverse()
+    return tuple(nesting)
+
+
+def dumpcsobject_isnested(fullobject: str) -> bool:
+    nesting = dumpcsobject_getnesting(fullobject)
+    if nesting:
+        return True
+    else:
+        return False
+
+
+def dumpcsobject_getpath(fullobject: str) -> str:
+    hasnamespace = dumpcsobject_hasnamespace(fullobject)
+    namespace = dumpcsobject_getnamespace(fullobject)
+    name = dumpcsobject_getname(fullobject)
+    nesting = dumpcsobject_getnesting(fullobject, includename=False, innertoouter=False)
+    path = ""
+    if hasnamespace:
+        path += f"{namespace}::"
+    for nestinglevel in nesting:
+        path += f"{nestinglevel}."
+    path += name
+    return path
 
 
 @lru_cache(maxsize=1, typed=True)
@@ -896,7 +942,7 @@ def dumpcsobject_isgeneric(fullobject: str) -> bool:
     return isgeneric
 
 
-def dumpcsobject_getgenericdatatype(fullobject: str) -> bool:
+def dumpcsobject_getgenericdatatype(fullobject: str) -> Optional[str]:
     # Not Done
     if not dumpcsobject_isgeneric(fullobject):
         # Not generic
@@ -959,7 +1005,6 @@ def dumpcsobject_gettypedefindex(fullobject: str) -> str:
 
     Arguments:
         fullobject: the content of the dumpcs object
-        of dumpcs.
 
     Return:
         typedefindex of the dumpcs object
@@ -991,7 +1036,6 @@ def dumpcsobject_isinherited(fullobject: str) -> bool:
 
     Arguments:
         fullobject: the content of the dumpcs object
-        of dumpcs.
 
     Return:
         whether the dumpcs object is inherited
@@ -1056,8 +1100,14 @@ def dumpcsobject_getmethods(fullobject: str) -> list[dict]:
     for fullmethod in fullmethods:
         isconstructor = dumpcsobject_method_isconstructor(fullmethod)
         isstaticconstructor = dumpcsobject_method_isstaticconstructor(fullmethod)
+        isoperator = dumpcsobject_method_isoperator(fullmethod)
+        isupdate = dumpcsobject_method_isupdate(fullmethod)
+        if isupdate:
+            updatetype = dumpcsobject_method_getupdatetype(fullmethod)
+        else:
+            updatetype = None
         if isconstructor or isstaticconstructor:
-            name = dumpcsobject_getname(fullobject)
+            name = dumpcsobject_getname(fullobject, includenesting=False)
         else:
             name = dumpcsobject_method_getname(fullmethod)
         datatype = dumpcsobject_method_getdatatype(fullmethod)
@@ -1096,6 +1146,9 @@ def dumpcsobject_getmethods(fullobject: str) -> list[dict]:
             "name": name,
             "isconstructor": isconstructor,
             "isstaticconstructor": isstaticconstructor,
+            "isoperator": isoperator,
+            "isupdate": isupdate,
+            "updatetype": updatetype,
             "datatype": datatype,
             "basedatatype": basedatatype,
             "isvoid": isvoid,
@@ -1150,6 +1203,33 @@ def dumpcsobject_method_isstaticconstructor(fullmethod: str) -> bool:
     return name == ".cctor"
 
 
+def dumpcsobject_method_isoperator(fullmethod: str) -> bool:
+    # Not Done
+    name = dumpcsobject_method_getname(fullmethod)
+    #OPERATORNAMES = {"+", "-", "*", "/", "%"} # Should be a constant!
+    # return name in OPERATORNAMES
+    raise NotImplementedError("operatornames list is unfinished")
+
+
+def dumpcsobject_method_isupdate(fullmethod: str) -> bool:
+    # Not Done
+    name = dumpcsobject_method_getname(fullmethod)
+    UPDATENAMES = {"FixedUpdate", "LateUpdate", "Update"} # Should be a constant!
+    return name in UPDATENAMES
+
+
+def dumpcsobject_method_getupdatetype(fullmethod: str) -> str:
+    # Not Done
+    if dumpcsobject_method_isupdate(fullmethod):
+        name = dumpcsobject_method_getname(fullmethod)
+        UPDATENAMES = {"FixedUpdate", "LateUpdate", "Update"}  # Should be a constant!
+        assert name in UPDATENAMES
+        return name
+    else:
+        # No update type
+        return None
+
+
 def dumpcsobject_method_hasgenericdatatype(fullmethod: str) -> str:
     # Not Done
     lines = getlines(fullmethod)
@@ -1162,7 +1242,7 @@ def dumpcsobject_method_hasgenericdatatype(fullmethod: str) -> str:
     name = words[-1]
     return "<" in name
 
-def dumpcsobject_method_getgenericdatatype(fullmethod: str) -> str:
+def dumpcsobject_method_getgenericdatatype(fullmethod: str) -> Optional[str]:
     # Not Done
     if not dumpcsobject_method_hasgenericdatatype(fullmethod):
         # No generic type
@@ -1196,7 +1276,7 @@ def dumpcsobject_method_getdatatype(fullmethod: str) -> str:
     return datatype
 
 
-def dumpcsobject_method_isvoid(fullmethod: str) -> str:
+def dumpcsobject_method_isvoid(fullmethod: str) -> bool:
     # Not Done
     datatype = dumpcsobject_method_getdatatype(fullmethod)
     basedatatype = datatype_getbase(datatype)
@@ -1227,7 +1307,7 @@ def dumpcsobject_method_hasslot(fullmethod: str) -> bool:
     return "Slot: " in offsetdataline
 
 
-def dumpcsobject_method_getslot(fullmethod: str) -> str:
+def dumpcsobject_method_getslot(fullmethod: str) -> Optional[str]:
     # Not Done
     if not dumpcsobject_method_hasslot(fullmethod):
         # No slot
@@ -1264,7 +1344,7 @@ def dumpcsobject_method_hasoffsetdata(fullmethod: str) -> bool:
     return hasoffsetdata
 
 
-def dumpcsobject_method_getrelativevirtualaddress(fullmethod: str) -> str:
+def dumpcsobject_method_getrelativevirtualaddress(fullmethod: str) -> Optional[str]:
     # Not Done
     if not dumpcsobject_method_hasoffsetdata(fullmethod):
         return None
@@ -1279,7 +1359,7 @@ def dumpcsobject_method_getrelativevirtualaddress(fullmethod: str) -> str:
     return relativevirtualaddress
 
 
-def dumpcsobject_method_getoffset(fullmethod: str) -> str:
+def dumpcsobject_method_getoffset(fullmethod: str) -> Optional[str]:
     # Not Done
     if not dumpcsobject_method_hasoffsetdata(fullmethod):
         return None
@@ -1294,7 +1374,7 @@ def dumpcsobject_method_getoffset(fullmethod: str) -> str:
     return offset
 
 
-def dumpcsobject_method_getvirtualaddress(fullmethod: str) -> str:
+def dumpcsobject_method_getvirtualaddress(fullmethod: str) -> Optional[str]:
     # Not Done
     if not dumpcsobject_method_hasoffsetdata(fullmethod):
         return None
@@ -1383,7 +1463,7 @@ def dumpcsobject_method_generic_hasoffsetdata(fullgeneric: str) -> bool:
     return hasoffsetdata
 
 
-def dumpcsobject_method_generic_getrelativevirtualaddress(fullgeneric: str) -> str:
+def dumpcsobject_method_generic_getrelativevirtualaddress(fullgeneric: str) -> Optional[str]:
     # Not Done
     if not dumpcsobject_method_generic_hasoffsetdata(fullgeneric):
         return None
@@ -1398,7 +1478,7 @@ def dumpcsobject_method_generic_getrelativevirtualaddress(fullgeneric: str) -> s
     return relativevirtualaddress
 
 
-def dumpcsobject_method_generic_getoffset(fullgeneric: str) -> str:
+def dumpcsobject_method_generic_getoffset(fullgeneric: str) -> Optional[str]:
     # Not Done
     if not dumpcsobject_method_generic_hasoffsetdata(fullgeneric):
         return None
@@ -1413,7 +1493,7 @@ def dumpcsobject_method_generic_getoffset(fullgeneric: str) -> str:
     return offset
 
 
-def dumpcsobject_method_generic_getvirtualaddress(fullgeneric: str) -> str:
+def dumpcsobject_method_generic_getvirtualaddress(fullgeneric: str) -> Optional[str]:
     # Not Done
     if not dumpcsobject_method_generic_hasoffsetdata(fullgeneric):
         return None
@@ -1450,7 +1530,7 @@ def dumpcsobject_method_generic_gettypes(fullgeneric: str) -> list[dict]:
         else:
             name = None
         datatype = dumpcsobject_method_generic_type_getdatatype(fulltype)
-        # Type is capitalized because type is a keyword in pytho
+        # Type is capitalized because "type" is a keyword
         Type = {
             "content": fulltype,
             "hasname": hasname,
@@ -1705,6 +1785,17 @@ def dumpcsobject_hasstaticconstructor(fullobject: str) -> bool:
     return False
 
 
+def dumpcsobject_getupdatetypes(fullobject: str) -> list[str]:
+    # Not Done
+    updatetypes = []
+    methods = dumpcsobject_getmethods(fullobject)
+    for method in methods:
+        if method["isupdate"]:
+            if not method["updatetype"] in updatetypes:
+                updatetypes.append(method["updatetype"])
+    return updatetypes
+
+
 def dumpcsobject_getfields(fullobject: str) -> list[dict]:
     # Not Done
     """
@@ -1944,7 +2035,7 @@ def dumpcsobject_getproperties(fullobject: str) -> list[dict]:
             genericdatatype = None
         hasgetter = dumpcsobject_property_hasgetter(fullproperty)
         hassetter = dumpcsobject_property_hassetter(fullproperty)
-        # The name Property is capitalized because property is a keyword in python
+        # The name Property is capitalized because property" is a keyword in python
         Property = {
             "content": fullproperty,
             "name": name,
@@ -2058,11 +2149,12 @@ def dumpcsobject_property_hassetter(fullproperty: str) -> bool:
 
 
 def dumpcs_getobjects(dumpcs: str,
-                      objecttypefilter: Optional[set[str]] = None,
-                      namespacefilter: Optional[set[str]] = None,
-                      customfilter: Optional[Callable] = None,
-                      getmethodhex = True,
-                      libfilepath = None) -> list[dict]:
+                      objecttypefilter: Optional[set[str]]=None,
+                      namespacefilter: Optional[set[str]]=None,
+                      customfilter: Optional[Callable]=None,
+                      makeobjectpaths=False,
+                      getmethodhex=True,
+                      libfilepath=None) -> list[dict]:
     #Not Done
     """
     Docs Not Done!
@@ -2102,11 +2194,13 @@ def dumpcs_getobjects(dumpcs: str,
 
     Return:
         list of parsed objects from the dumpcs file
+        :param makeobjectpaths:
     """
     if getmethodhex:
         raise NotImplementedError("getmethodhex is not done!")
     if getmethodhex and libfilepath is None:
-        raise UserWarning("Call to dumpcs_getobjects with getmethodhex enabled but no libfilepath.")
+        raise IllegalArgumentException("Call to dumpcs_getobjects with" \
+                                        "getmethodhex enabled but no libfilepath.")
     objectdelimiter = "// Namespace: "
     if dumpcs_hasattributes(dumpcs):
         dumpcs = dumpcs_removeattributes(dumpcs)
@@ -2133,14 +2227,16 @@ def dumpcs_getobjects(dumpcs: str,
             namespace = dumpcsobject_getnamespace(fullobject)
         else:
             namespace = None
-        if namespacefilter is not None and not(namespace in namespacefilter):
+        if namespacefilter and not(namespace in namespacefilter):
             continue
-        # The name objecttype is used because type is a keyword
+        # The name objecttype is used because "type" is a keyword
         objecttype = dumpcsobject_gettype(fullobject)
-        if objecttypefilter is not None and not (objecttype in objecttypefilter):
+        if objecttypefilter and not (objecttype in objecttypefilter):
             continue
         isinherited = dumpcsobject_isinherited(fullobject)
-        name = dumpcsobject_getname(fullobject)
+        name = dumpcsobject_getname(fullobject, includenesting=False)
+        isnested = dumpcsobject_isnested(fullobject)
+        nesting = dumpcsobject_getnesting(fullobject, includename=False, innertoouter=True)
         datatype = dumpcsobject_getdatatype(fullobject)
         if isinherited:
             base = dumpcsobject_getbase(fullobject)
@@ -2161,11 +2257,13 @@ def dumpcs_getobjects(dumpcs: str,
             methods = dumpcsobject_getmethods(fullobject)
             hasconstructor = dumpcsobject_hasconstructor(fullobject)
             hasstaticconstructor = dumpcsobject_hasstaticconstructor(fullobject)
+            updatetypes = dumpcsobject_getupdatetypes(fullobject)
         else:
             #methods = None
             methods = []
-            hasconstructor = dumpcsobject_hasconstructor(fullobject)
-            hasstaticconstructor = dumpcsobject_hasstaticconstructor(fullobject)
+            hasconstructor = False
+            hasstaticconstructor = False
+            updatetypes = []
         hasfields = dumpcsobject_hasfields(fullobject)
         if hasfields:
             fields = dumpcsobject_getfields(fullobject)
@@ -2178,7 +2276,7 @@ def dumpcs_getobjects(dumpcs: str,
         else:
             # properties = None
             properties = []
-        #The name Object is capitalized because object is a keyword in python
+        #The name Object is capitalized because "object" is a keyword
         Object = {
             "content": fullobject,
             "name": name,
@@ -2189,19 +2287,25 @@ def dumpcs_getobjects(dumpcs: str,
             "datatype": datatype,
             "isinherited": isinherited,
             "base": base,
+            "isnested": isnested,
+            "nesting": nesting,
             "isgeneric": isgeneric,
             "genericdatatype": genericdatatype,
             "hasmethods": hasmethods,
             "methods": methods,
             "hasconstructor": hasconstructor,
             "hasstaticconstructor": hasstaticconstructor,
+            "updatetypes": updatetypes,
             "hasfields": hasfields,
             "fields": fields,
             "hasproperties": hasproperties,
             "properties": properties,
         }
+        if makeobjectpaths:
+            path = dumpcsobject_getpath(fullobject)
+            Object["path"] = path
         # Now that we have all the object's data, we can check against custom filter.
-        if customfilter is not None and not(customfilter(Object)):
+        if customfilter and not(customfilter(Object)):
             continue
         objects.append(Object)
     return objects
@@ -2215,19 +2319,24 @@ def dumpcs_getimages(dumpcs: str) -> list[dict]:
     """
     raise NotImplementedError("dumpcs_getimages function does not exist")
 
+
 dumpcspath, encoding = r"C:\Users\zachy\OneDrive\Documents\Work\Projects\Polywar\64bit\dump.cs", 'utf8'
-#dumpcspath, encoding = r"C:\Users\zachy\OneDrive\Documents\Work\Projects\Pixel Gun 3D\Pixel Gun 3D 16.6.1\Pixel Gun 3D 16.6.1 dump.cs", 'utf8'
+#dumpcspath, encoding = r"C:\Users\zachy\OneDrive\Documents\Work\Projects\Pixel Gun
+# 3D\Pixel Gun 3D
+# 16.6.1\Pixel Gun
+# 3D 16.6.1 dump.cs", 'utf8'
 outputpath = r"C:\Users\zachy\OneDrive\Documents\Work\Temp\Python Temps\parseddumpcs.json"
-#with open(dumpcspath,encoding = encoding) as f:
-    #objects = dumpcs_getobjects(dumpcs_removeattributes(f.read()), getmethodhex=False)
-#with open(outputpath,'w',encoding = encoding) as f:
-    # We can't write all the objects to the file because it's too big and eats up all my memory
-    # when I try to view it
-    # For testing purposes, only a few hundred is necessary
-    #f.write(str(objects))
-    #for i in objects:
-        #if i["name"] == "FriendsMenu":
-        #if "ResourceFallbackManage" in i["name"]:
-            #f.write(str(i))
-            #sys.exit()
-    #f.write(str(objects[1000:1300]))
+if __name__ == "__main__":
+    with open(dumpcspath,encoding = encoding) as f:
+        objects = dumpcs_getobjects(dumpcs_removeattributes(f.read()), makeobjectpaths=True, getmethodhex=False)
+    with open(outputpath,'w',encoding = encoding) as f:
+        # We can't write all the objects to the file because it's too big and eats up all my memory
+        # when I try to view it
+        # For testing purposes, only a few hundred is necessary
+        #f.write(str(objects))
+        #for i in objects:
+            #if i["name"] == "FriendsMenu":
+            #if "ResourceFallbackManage" in i["name"]:
+                #f.write(str(i))
+                #sys.exit()
+        f.write(str(objects[1000:1300]))
