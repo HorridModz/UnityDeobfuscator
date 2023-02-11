@@ -525,7 +525,7 @@ def dumpcs_isvalid(dumpcs: str) -> bool:
     On the other hand, the dumpcs_checkformat function analyzes the whole thing and is very picky.
 
     Arguments:
-        dumpcs: the content of the dumpcs file
+        dumpcs: the raw content of the dumpcs file
 
     Return:
         whether the dumpcs is valid
@@ -544,7 +544,7 @@ def dumpcs_checkformat(dumpcs: str) -> list[dict]:
     Returns list of unexpected formatting errors
 
     Arguments:
-        dumpcs: the content of the dumpcs file
+        dumpcs: the raw content of the dumpcs file
 
     Return:
         list of errors with the line number and error message
@@ -563,7 +563,7 @@ def dumpcs_hasattributes(dumpcs: str, fastcheck=False) -> bool:
     Determines whether a dumpcs file has attributes
 
     Arguments:
-        dumpcs: the content of the dumpcs file
+        dumpcs: the raw content of the dumpcs file
         fastcheck: whether to perform a fast or thorough check for attributes (fast should be sufficient,
         but it is safer to perform a thorough check)
 
@@ -600,7 +600,7 @@ def dumpcs_constructor(path: str) -> str:
         path: the file path of the dumpcs file
 
     Return:
-        the contents of the dump.cs file
+        the raw content of the dump.cs file
     """
     dumpcs = filehandler.read_file(path)
     if not dumpcs_isvalid(dumpcs):
@@ -628,10 +628,10 @@ def dumpcs_removeattributes(dumpcs: str) -> str:
     Does not remove blank lines
 
     Arguments:
-        dumpcs: the content of the dumpcs file
+        dumpcs: the raw content of the dumpcs file
 
     Return:
-        dumpcs content with attributes removed
+        dumpcs raw content with attributes removed
    """
     lines = getlines(dumpcs, False, False)
     newlines = []
@@ -667,7 +667,7 @@ def dumpcsobject_getnamespace(rawobject: str) -> Optional[str]:
 
 
     Arguments:
-        rawobject: the content of the dumpcs object
+        rawobject: the raw content of the dumpcs object
 
     Return:
         namespace of the dumpcs sobject
@@ -701,7 +701,7 @@ def dumpcsobject_gettype(rawobject: str) -> str:
 
 
     Arguments:
-        rawobject: the content of the dumpcs object
+        rawobject: the raw content of the dumpcs object
 
     Return:
         type of the dumpcs object
@@ -742,7 +742,7 @@ def dumpcsobject_getdatatype(rawobject: str) -> str:
 
 
     Arguments:
-        rawobject: the content of the dumpcs object
+        rawobject: the raw content of the dumpcs object
 
     Return:
         data type of the dumpcs object
@@ -793,7 +793,7 @@ def dumpcsobject_getname(rawobject: str, includenesting=False) -> str:
 
 
     Arguments:
-        rawobject: the content of the dumpcs object
+        rawobject: the raw content of the dumpcs object
         includenesting: whether to include the outer objects in the name
         (only applies if the object is nested)
 
@@ -855,7 +855,7 @@ def dumpcsobject_getbase(rawobject: str) -> Optional[str]:
 
 
     Arguments:
-        rawobject: the content of the dumpcs object
+        rawobject: the raw content of the dumpcs object
 
     Returns:
         base class of the dumpcs object, or None if the dumpcs object is not inherited
@@ -1004,7 +1004,7 @@ def dumpcsobject_gettypedefindex(rawobject: str) -> str:
         Return: 4
 
     Arguments:
-        rawobject: the content of the dumpcs object
+        rawobject: the raw content of the dumpcs object
 
     Return:
         typedefindex of the dumpcs object
@@ -1035,7 +1035,7 @@ def dumpcsobject_isinherited(rawobject: str) -> bool:
         Return: True
 
     Arguments:
-        rawobject: the content of the dumpcs object
+        rawobject: the raw content of the dumpcs object
 
     Return:
         whether the dumpcs object is inherited
@@ -1068,7 +1068,7 @@ def dumpcsobject_getmethods(rawobject: str) -> list[dict]:
     Gets a list of methods from a dumpcs object
     Includes list of generics in each method
 
-    rawobject: the content of the dumpcs object
+    rawobject: the raw content of the dumpcs object
 
     Return:
         list of methods in the dumpcs object
@@ -1142,7 +1142,7 @@ def dumpcsobject_getmethods(rawobject: str) -> list[dict]:
             offset = None  # Offset
         params = dumpcsobject_method_getparams(rawmethod)
         method = {
-            "content": rawmethod,
+            "raw": rawmethod,
             "name": name,
             "isconstructor": isconstructor,
             "isstaticconstructor": isstaticconstructor,
@@ -1397,7 +1397,7 @@ def dumpcsobject_method_getgenerics(rawmethod: str) -> list[dict]:
 
     Gets a list of generics from a dumpcs method
 
-    rawmethod: the content of the dumpcs method
+    rawmethod: the raw content of the dumpcs method
 
     Return:
         list of generics in the dumpcs method
@@ -1435,7 +1435,7 @@ def dumpcsobject_method_getgenerics(rawmethod: str) -> list[dict]:
             virtualaddress = None  # VA
             offset = None  # Offset
         generic = {
-            "content": rawgeneric,
+            "raw": rawgeneric,
             "types": types,
             "hasoffsetdata": hasoffsetdata,
             "relativevirtualaddress": relativevirtualaddress,
@@ -1515,7 +1515,7 @@ def dumpcsobject_method_generic_gettypes(rawgeneric: str) -> list[dict]:
 
     Gets a list of types from a dumpcs method generic
 
-    rawgeneric: the content of the dumpcs method generic
+    rawgeneric: the raw content of the dumpcs method generic
 
     Return:
         list of types in the dumpcs method generic
@@ -1532,7 +1532,7 @@ def dumpcsobject_method_generic_gettypes(rawgeneric: str) -> list[dict]:
         datatype = dumpcsobject_method_generic_type_getdatatype(fulltype)
         # Type is capitalized because "type" is a keyword
         Type = {
-            "content": fulltype,
+            "raw": fulltype,
             "hasname": hasname,
             "name": name,
             "datatype": datatype,
@@ -1587,7 +1587,7 @@ def dumpcsobject_method_getparams(rawmethod: str) -> list[dict]:
 
     Gets a list of params from a dumpcs method
 
-    rawmethod: the content of the dumpcs method
+    rawmethod: the raw content of the dumpcs method
 
     Return:
         list of params in the dumpcs object
@@ -1656,7 +1656,7 @@ def dumpcsobject_method_getparams(rawmethod: str) -> list[dict]:
         else:
             default = None
         param = {
-            "content": rawparam,
+            "raw": rawparam,
             "hasname": hasname,
             "name": name,
             "datatype": datatype,
@@ -1804,7 +1804,7 @@ def dumpcsobject_getfields(rawobject: str) -> list[dict]:
 
     Gets a list of fields from a dumpcs object
 
-    rawobject: the content of the dumpcs object
+    rawobject: the raw content of the dumpcs object
 
     Return:
         list of fields in the dumpcs object
@@ -1854,7 +1854,7 @@ def dumpcsobject_getfields(rawobject: str) -> list[dict]:
         else:
             default = None
         field = {
-            "content": rawfield,
+            "raw": rawfield,
             "name": name,
             "datatype": datatype,
             "basedatatype": basedatatype,
@@ -1993,7 +1993,7 @@ def dumpcsobject_getproperties(rawobject: str) -> list[dict]:
 
     Gets a list of properties from a dumpcs object
 
-    rawobject: the content of the dumpcs object
+    rawobject: the raw content of the dumpcs object
 
     Return:
         list of properties in the dumpcs object
@@ -2037,7 +2037,7 @@ def dumpcsobject_getproperties(rawobject: str) -> list[dict]:
         hassetter = dumpcsobject_property_hassetter(rawpropertyy)
         # The name Property is capitalized because property" is a keyword in python
         Property = {
-            "content": rawpropertyy,
+            "raw": rawpropertyy,
             "name": name,
             "datatype": datatype,
             "basedatatype": basedatatype,
@@ -2175,14 +2175,14 @@ def dumpcs_getobjects(dumpcs: str,
         iterated through until a match is found), but a list is simpler, easier, and faster to create,
         process, and iterate over
         8. Object delimiter should be a constant
-        9. Supplying content and objectcache parameters to all functions, whether they use them or not,
+        9. Supplying raw content and objectcache parameters to all functions, whether they use them or not,
         is good for consistency, readability, and refactoring, but sacrifices speed and memory
 
     Parses dumpcs file into a list of objects
     Does not remove blank lines
 
     Arguments:
-        dumpcs: the contents of the dumpcs file
+        dumpcs: the raw content of the dumpcs file
         createtypemodels: whether to create type models for objects
         objecttypefilter: filter to only process objects of certain types (set to None to disable filter)
         namespacefilter: filter to only process objects that are in certain namespaces (inclusive)
@@ -2278,7 +2278,7 @@ def dumpcs_getobjects(dumpcs: str,
             properties = []
         #The name Object is capitalized because "object" is a keyword
         Object = {
-            "content": rawobject,
+            "raw": rawobject,
             "name": name,
             "typedefindex": typedefindex,
             "type": objecttype,
