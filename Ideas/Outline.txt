@@ -34,6 +34,7 @@ You can also manually add custom types to trust
 -Trust plugin types
 -Trust order (even if the game does not scramble methods / fields / properties, this is still not recommended
 because games may add, remove, and delete fields / methods / properties).
+-Trust operators (if method name starts with "op_", then it is an operator)
 -Configure deobfuscation tolerance
 -Configure how many candidates to accept (If there are more candidates than this number, only the best matches
 will be kept.)
