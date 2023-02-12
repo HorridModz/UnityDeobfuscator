@@ -191,7 +191,7 @@ def getwords(s: str) -> list[str]:
     If a chunk of whitespace is encountered (ex: "\t\n" or "  ", the whole thing
     will be considered one delimiter
 
-    @param s: The string to get words from
+    @param s: The string to split into words
     @return: List of words in the initial string (in order)
 
     Example:
@@ -206,7 +206,7 @@ def getwords(s: str) -> list[str]:
 
 def wordstostring(words: list[str],
                   totrimwords=False,
-                  toignoreblankswords=False,
+                  toignoreblankwords=False,
                   concatenator=" ") -> str:
     """
     Joins a list of words into a string
@@ -230,55 +230,50 @@ def wordstostring(words: list[str],
 def getlines(s: str,
              toremoveblanklines=False,
              totrimlines=False) -> list[str]:
-    # Done
-    """
-    Possible Improvements:
-        1. Creating a new list is inefficient, modifying existing list would be ideal
-        2. Directly using s.splitlines() instead of using lines variable may be faster,
-        but sacrifices readability  and simplicity  and simplicity
 
+    """
     Splits a string into a list of lines
 
+    @param s: The string to split into lines
+    @param toremoveblanklines: Whether to ignore lines that are blank or only whitespace
+    @param totrimlines: Wwhether to trim whitespace from each line (leading and trailing)
+    @return: List of lines in the string (in order)
+
     Example:
-        String: "a
+        s "a
 
                     b
 
                  c  "
         toremoveblanklines: True
         totrimlines: True
-        Return: ["a","b","c"]
-
-    Arguments:
-        s: string to split into lines
-        toremoveblanklines: whether to ignore lines that are blank or only whitespace
-        totrimlines: whether to trim leading and trailing whitespace from each line
-        (only leading / only trailing whitespace is not supported)
-
-    Return:
-        list of the string's lines
+        return: ["a","b","c"]
     """
     lines = s.splitlines()
-    if toremoveblanklines or totrimlines:
-        newlines = []
-        for line in lines:
-            if totrimlines:
-                line = trim(line, True, True)
-            if not (toremoveblanklines and iswhitespace(line)):
-                newlines.append(line)
-        return newlines
-    else:
-        return lines
+    newlines = []
+    for line in lines:
+        if totrimlines:
+            line = trim(line, True, True)
+        if not (toremoveblanklines and iswhitespace(line)):
+            newlines.append(line)
+    return newlines
+    # return [trim(line, True, True) if totrimlines else line
+    #         for line in s.splitlines()
+    #         if not (toremoveblanklines and iswhitespace(line))]
 
 
 def linestostring(lines: list[str],
                   totrimlines=False,
-                  toignoreblanklines=False) -> str:
-    # Done
+                  toignoreblanklines=False,
+                  concatenator="\n") -> str:
     """
-    Possible Improvements:
+    Joins a list of lines into a string
 
-    joins a list of lines into a string
+    @param lines: The list of lines to concatenate
+    @param totrimlines: Whether to trim whitespace from lines. Trims both leading and trailing whitespace.
+    @param toignoreblanklines: Whether to ignore lines that are only whitespace
+    @param concatenator: Delimiter to concatenate lines with (default "\n")
+    @return: Lines concatenated by concatenator
 
     Example:
         lines: ["a","","b","    ","cd",""]
@@ -290,17 +285,10 @@ def linestostring(lines: list[str],
 
                  cd
                  "
-
-    Arguments:
-        lines: list of lines to join into a string
-        toignoreblanklines: whether to concatenate or ignore lines that are blank or only whitespace
-        totrimlines: whether to trim leading and trailing whitespace from each line
-        (only leading / only trailing whitespace is not supported)
-
-    Return:
-        all the lines concatenated by new line
     """
-    return wordstostring(lines, totrimlines, toignoreblanklines, toignoreblanklines, "\n")
+    # This function is exactly the same as wordstostring, except it operates on lines and
+    # "\n" is the default concatenator. So, it's best to reuse the wordstostring function here.
+    return wordstostring(lines, totrimlines, toignoreblanklines, "\n")
 
 
 def datatype_getbase(datatype: str) -> str:
