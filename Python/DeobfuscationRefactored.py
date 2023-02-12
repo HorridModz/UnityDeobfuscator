@@ -19,65 +19,35 @@ except AttributeError:
 filehandler = fileutils.FileHandler()
 
 
-def removeattributes(*args, **kwargs):
-    """
-    Function has been removed
-    """
-    raise NotImplementedError("removeattributes function has been removed.\
-     Attributes are removed from the whole dumpcs, so the call to removeattributes can be deleted.")
-
-
-def removewhitespace(*args, **kwargs):
-    """
-    Function has been removed
-    """
-    raise NotImplementedError("removewhitespace function has been removed.\
-         To trim whitespace, use the trim function. To remove all whitespace, use the removeallwhitespace funnction.")
-
-
-def getobjects(*args, **kwargs):
-    """
-    Function has been removed
-    """
-    raise NotImplementedError("getobjects function has been removed.\
-         To get objects, use dumpcs_getobjects directly on dumpcs.")
-
-
-def getrawobjects(*args, **kwargs):
-    """
-    Function has been removed
-    """
-    raise NotImplementedError("getrawobjects function has been removed.\
-             To get objects, use dumpcs_getobjects directly on dumpcs.")
-
-
 def readaftersubstring(sub: str, s: str, backward=False, regex=False, mustcontain=True, lengthwarning=True) -> str:
-    # Done
     """
-    This function is based off of
-    https://stackoverflow.com/questions/12572362/how-to-get-a-string-after-a-specific-substring/57064170#57064170
-
-    Possible Improvements:
-        1.  Directly returning instead of using suffix variable may be faster, but sacrifices
-        readability and simplicity
-
     Returns the substring after the delimiter
     If the substring is not found in the string, returns the whole string
+    Also supports backward (right to left) and regex
+
+    @param sub: The substring (or regex) to read after
+    @param s: The initial string
+    @param backward: Whether to read from right to left
+    @param regex: Whether to treat the substring as regex
+    @param mustcontain: Whether to throw an AssertionError if the substring (or regex) is not present
+    in the initial string
+    @param lengthwarning: Whether to raise a warning if the substring is longer than the initial string,
+    which should never happen (only applies if regex is False)
+    @return: The partition of the string after the substring (or regex)
+
+    :raises ImportError: Wrong regex module: Expected regex module, got re module.
+    To fix this, replace "import re" with "import regex as re"
+    :raises AssertionError: param mustcontain was True and substring (or regex) was not present
+    in the initial string
+    :warns SyntaxWarning: param lengthwarning was True, param regex was False, and substring was longer
+    than initial string
 
     Example:
-        String: "Split this string by delimiter"
-        Sub:    "string"
-        Return: " by delimiter"
-
-    Arguments:
-        s: string to split
-        sub: delimiter to read after
-        lengthwarning: whether to throw a warning if the arguments do not make sense (this is purely
-        to catch bugs)
-
-    Return:
-        the partition of the string that comes after the delimiter
+        sub: "string"
+        s: "Split this string by delimiter"
+        return: " by delimiter"
     """
+
     # If re isn't imported at all, that will show later.
     # Since we only catch AttributeError, we don't have to worry about it here.
     try:
@@ -113,31 +83,32 @@ def readaftersubstring(sub: str, s: str, backward=False, regex=False, mustcontai
 
 
 def readbeforesubstring(sub: str, s: str, backward=False, regex=False, mustcontain=True, lengthwarning=True) -> str:
-    # Done
     """
-    This function is based off of
-    https://stackoverflow.com/questions/12572362/how-to-get-a-string-after-a-specific-substring/57064170#57064170
-
-    Possible Improvements:
-        1.  Directly returning instead of using prefix variable may be faster, but sacrifices
-        readability and simplicity
-
     Returns the substring before the delimiter
     If the substring is not found in the string, returns the whole string
+    Also supports backward (right to left) and regex
+
+    @param sub: The substring (or regex) to read before
+    @param s: The initial string
+    @param backward: Whether to read from right to left
+    @param regex: Whether to treat the substring as regex
+    @param mustcontain: Whether to throw an AssertionError if the substring (or regex) is not present in the initial
+    string
+    @param lengthwarning: Whether to raise a warning if the substring is longer than the initial string,
+    which should never happen (only applies if regex is False)
+    @return: The partition of the string before the substring (or regex)
+
+    :raises ImportError: Wrong regex module: Expected regex module, got re module.
+    To fix this, replace "import re" with "import regex as re"
+    :raises AssertionError: param mustcontain was True and substring (or regex) was not present
+    in the initial string
+    :warns SyntaxWarning: param lengthwarning was True, param regex was False, and substring was longer
+    than initial string
 
     Example:
-        String: "Split this string by delimiter"
-        Sub:    "string"
-        Return: "Split this "
-
-    Arguments:
-        s: string to split
-        sub: delimiter to read before
-        lengthwarning: whether to throw a warning if the arguments do not make sense (this is purely
-        to catch bugs)
-
-    Return:
-        the partition of the string that comes before the delimiter
+        sub: "string"
+        s: "Split this string by delimiter"
+        return: "Split this "
     """
     # If re isn't imported at all, that will show later.
     # Since we only catch AttributeError, we don't have to worry about it here.
@@ -173,186 +144,13 @@ def readbeforesubstring(sub: str, s: str, backward=False, regex=False, mustconta
             return s
 
 
-def removesubstring(sub: str, s: str) -> str:
-    # Done
-    """
-    Possible Improvements:
-
-    Removes all occurrences of one substring from a string
-
-    Example:
-        String: "Removing Substrings"
-        Sub:    "ing"
-        Return: "Remov Substrs"
-
-    Arguments:
-        s: string to remove substring from
-        sub: substring to remove from string
-
-    Return:
-        string with substring removed
-    """
-    return s.replace(sub, "")
-
-
-def removesubstrings(s: str, subs: list[str]) -> str:
-    # Done
-    """
-    Possible Improvements:
-
-    Removes all occurrences of multiple substrings from a string, in order of the list of substrings
-
-    Example:
-        String: "Removing Substrings"
-        Subs:    ["e","in","ing"]
-        Return: "Rmovg Substrgs"
-
-    Arguments:
-        s: string to remove substrings from
-        subs: list of substrings to remove from string
-
-    Return:
-        string with substrings removed
-    """
-    for sub in subs:
-        s = removesubstring(s, sub)
-    return s
-
-
-def replacesubstring(s: str, sub: str, replace: str) -> str:
-    # Done
-    """
-    Possible Improvements:
-
-    Replaces all occurrences of one substring in a string
-
-    Example:
-        String:  "Replacing Substrings"
-        Sub:     "ing"
-        Replace: "ed"
-        Return: "Replaced Substreds"
-
-    Arguments:
-        s: string to replace substring in
-        sub: substring to replace
-        replace: what to replace substring with
-
-    Return:
-        string with substring replaced with replace
-    """
-    return s.replace(sub, replace)
-
-
-def replacesubstrings(s: str, subs: list[str], replace: str) -> str:
-    # Done
-    """
-    Possible Improvements:
-
-    Replaces all occurrences of multiple substrings in a string, in order of the list of substrings
-
-    Example:
-        String:  "Replacing Substrings"
-        Subs:     ["e","in","ing"]
-        Replace: "c"
-        Return: "Rcplaccg Substrcgs"
-
-     Arguments:
-        s: string to replace substrings in
-        subs: list of substrings to remove in string
-        replace: what to replace substring with
-
-    Return:
-        string with substrings replaced with replace
-    """
-    for sub in subs:
-        s = replacesubstring(s, sub, replace)
-    return s
-
-
-def removeallwhitespace(s: str) -> str:
-    # Done
-    # NOTE: Function is named removeallwhitespace because old function removewhitespace
-    # was for trimming. Once all functions use trim instead, this function can be renamed
-    # back to removewhitespace.
-    """
-    Possible Improvements:
-        Make whitespace a constant instead of unpacking each time function is called
-
-    Removes all whitespace from a string
-    Does not just trim leading and trailing. For that, use the trim function.
-
-    Example:
-        String: "   Whitespace  will be      removed from
-        this string"
-        Return: "Whitespacewillberemovedfromthisstring"
-
-    Arguments:
-        s: string to remove whitespace from
-
-    Return:
-        string with whitespace removed
-    """
-    # Should have a constant instead of unpacking
-    # string.whitespace each time
-    _whitespace = [*string.whitespace]
-    return removesubstrings(s, _whitespace)
-
-
-def removeblanklines(s: str) -> str:
-    # Done
-    """
-    Possible Improvements:
-
-    Removes all blank lines from a string
-    This function does not remove lines with only whitespace!
-
-    Example:
-        String: "
-        blank
-            lines will be
-
-            removed from
-
-            thisstr
-         ing"
-        Return: "blank
-            lines will be
-            removed from
-            thisstr
-         ing"
-
-    Arguments:
-        s: string to remove blank lines from
-
-    Return:
-        string with blank lines removed
-    """
-    return replacesubstring(s, "\n\n", "\n")
-
-
 def iswhitespace(s: str, totreatblankaswhitespace=True) -> bool:
-    # Done
     """
-    Possible Improvements:
+    Determines if a string is whitespace
 
-    Detects if a string is all whitespace
-    Works on strings with any length, including 0
-
-    Example:
-        String: "
-             "
-        Return: True
-
-        String: "   hello world!
-            hi"
-        Return: false
-
-    Arguments:
-        s: string to check for whitespace
-        totreatblankaswhitespace: whether to treat "" as whitespace
-
-    Return:
-        whether string is all whitespace
+    @param s: The string to check
+    @param totreatblankaswhitespace: Whether to treat an empty string ("") as whitespace
+    @return: Whether the string is whitespace
     """
     if s == "":
         return totreatblankaswhitespace
@@ -362,24 +160,19 @@ def iswhitespace(s: str, totreatblankaswhitespace=True) -> bool:
 
 def trim(s: str, leading=True, trailing=True) -> str:
     """
-    Possible Improvements:
-
     Trims whitespace from a string
 
+    @param s: The initial string
+    @param leading: Whether to trim leading whitespace
+    @param trailing: Whether to trim trailing whitespace
+    @return: String with whitespace trimmed
+
     Example:
-        String: "   hello world!
+        s: "   hello world!
         "
-        Leading: True
-        Trailing: True
-        Return: "hello world!"
-
-    Arguments:
-        s: string to trim whitespace from
-        leading: whether to trim leading whitespace
-        trailing: whether to trim trailing whitespace
-
-    Return:
-        string with trimmed whitespace
+        leading: True
+        trailing: True
+        return: "hello world!"
     """
     if leading and trailing:
         return s.strip()
@@ -392,78 +185,46 @@ def trim(s: str, leading=True, trailing=True) -> str:
 
 
 def getwords(s: str) -> list[str]:
-    # Done
     """
-    Possible Improvements:
-        1. Creating a new list is inefficient, modifying existing list would be ideal
-        2. Directly using s.split() instead of using words variable may be faster, but
-        sacrifices readability  and simplicity  and simplicity
-
-
     Splits a string into a list of words
-    Treats any type of whitespace as a word delimiter, including new lines and tabs
-    Treats chunks of whitespace as delimiters (ex: 2 spaces has the same effect as 1 space)
+    Treats any whitespace as a word delimiter, including newlines and tabs
+    If a chunk of whitespace is encountered (ex: "\t\n" or "  ", the whole thing
+    will be considered one delimiter
+
+    @param s: The string to get words from
+    @return: List of words in the initial string (in order)
 
     Example:
-        String: "the quick
+        s: "the quick
                     brown       fox
 
                  abcdefg  "
-        Return: ["the","quick","brown","fox","abcdefg"]
-
-    Arguments:
-        s: string to split into words
-
-    Return:
-        list of the string's words
+        return: ["the","quick","brown","fox","abcdefg"]
     """
     return s.split()
 
 
 def wordstostring(words: list[str],
                   totrimwords=False,
-                  toignoreblankwords=True,
-                  toignorewhitespacewords=False,
+                  toignoreblankswords=False,
                   concatenator=" ") -> str:
-    # Done
     """
-    Possible Improvements:
-        1. Creating a new list is inefficient, modifying existing list would be ideal
+    Joins a list of words into a string
 
-    joins a list of words into a string
-
-    Example:
-        words: ["hello","a","b","   ","cd\n","","hey",""]
-        concatenator: " "
-        toignoreblankwords: false
-        totrimwords: false
-        toignorewhitespacewords: false
-        Return: "hello a b     cd
-                   hey "
-
-    Arguments:
-        words: list of words to join into a string
-        toignoreblankwords: whether to concatenate or ignore blank words
-        totrimwords: whether to trim leading and trailing whitespace from each word
-        (only leading / only trailing whitespace is not supported)
-        toignorewhitespacewords: whether to concatenate or ignore words with only whitespace
-        concatenator: the string to put in between words (default space)
-
-    Return:
-        all the words concatenated by concatenator (default space)
+    @param words: The list of words to concatenate
+    @param totrimwords: Whether to trim whitespace from words. Trims both leading and trailing whitespace.
+    @param toignoreblankwords: Whether to ignore words that are only whitespace
+    @param concatenator: Delimiter to concatenate words with (default " ")
+    @return: Words concatenated by concatenator
     """
-    if not(toignoreblankwords or toignorewhitespacewords or totrimwords):
-        return concatenator.join(words)
-    else:
-        wordstoconcatenate = []
-        for word in words:
-            if iswhitespace(word) and toignorewhitespacewords:
-                continue
-            if totrimwords:
-                word = trim(word, True, True)
-            if not (word == "" and toignoreblankwords):
-                wordstoconcatenate.append(word)
-        return concatenator.join(wordstoconcatenate)
+    wordstoconcatenate = []
+    for word in words:
+        if iswhitespace(word) and toignoreblankwords:
+            continue
+        if totrimwords:
+            word = trim(word, True, True)
+        wordstoconcatenate.append(word)
+    return concatenator.join(wordstoconcatenate)
 
 
 def getlines(s: str,
