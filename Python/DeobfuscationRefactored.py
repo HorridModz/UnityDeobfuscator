@@ -12,8 +12,13 @@ from typing import Any
 from unitydeobfuscatorexceptions import *
 import fileutils
 
-
+try:
+    fileutils.FileHandler
+except AttributeError:
+    raise ImportError("Wrong fileutils module (expected built-in unitydeobfuscator fileutils module")
 filehandler = fileutils.FileHandler()
+
+
 def removeattributes(*args, **kwargs):
     """
     Function has been removed
