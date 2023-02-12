@@ -1,6 +1,7 @@
-This is my first big project using c++ and my first time using an IDE and Version Control.
+# THIS IS UNFINISHED
+**DO NOT TRY TO USE**
 
-A c++ tool for deobfuscating Unity games with lightning speed
+A python tool for deobfuscating Unity games.
 
 Put in apk (il2cpp or mono), dll or dummydll (all or just one), metadata and libil2cpp.so (for il2cpp) or dump.cs (for il2cpp) files of obfuscated and unobfuscated, and it will deobfuscate
 Can generate json output, txt output, deobfuscated dll(s), deobfuscated apk, deobfuscated dump.cs, and more!

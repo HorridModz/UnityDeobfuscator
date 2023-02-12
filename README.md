@@ -1,1 +1,4 @@
-A c++ tool for deobfuscating Unity games with lightning speed
+# THIS IS UNFINISHED
+**DO NOT TRY TO USE**
+
+A python tool for deobfuscating Unity games.
