@@ -288,7 +288,7 @@ def linestostring(lines: list[str],
     """
     # This function is exactly the same as wordstostring, except it operates on lines and
     # "\n" is the default concatenator. So, it's best to reuse the wordstostring function here.
-    return wordstostring(lines, totrimlines, toignoreblanklines, "\n")
+    return wordstostring(lines, totrimlines, toignoreblanklines, concatenator)
 
 
 def datatype_getbase(datatype: str) -> str:
