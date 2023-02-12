@@ -5,7 +5,7 @@ import warnings
 import copy
 from typing import *
 import string
-import re
+import regex as re
 import json
 from functools import cache, lru_cache
 from typing import Any
@@ -46,10 +46,9 @@ def getrawobjects(*args, **kwargs):
              To get objects, use dumpcs_getobjects directly on dumpcs.")
 
 
-def readaftersubstring(sub: str, s: str, backwards=False, mustcontain=True, lengthwarning=True) -> str:
+def readaftersubstring(sub: str, s: str, backward=False, regex=False, mustcontain=True, lengthwarning=True) -> str:
     # Done
     """
-    Todo: Regex Support, Update Docs
     This function is based off of
     https://stackoverflow.com/questions/12572362/how-to-get-a-string-after-a-specific-substring/57064170#57064170
 
@@ -74,24 +73,43 @@ def readaftersubstring(sub: str, s: str, backwards=False, mustcontain=True, leng
     Return:
         the partition of the string that comes after the delimiter
     """
-    if lengthwarning and len(sub) > len(s):
-        warnings.warn(f"Call to readaftersubstring(sub={sub}, str={s}): substring is longer than string",
-                      SyntaxWarning)
-    if mustcontain:
-        assert sub in s
-    if backwards:
-        prefix, found, suffix = s.rpartition(sub)
+    # If re isn't imported at all, that will show later.
+    # Since we only catch AttributeError, we don't have to worry about it here.
+    try:
+        re.REVERSE
+    except AttributeError:
+        raise ImportError("Wrong regex module: Expected regex module, got re module. To fix this, replace \"import "
+                          "re\" with \"import regex as re\"")
+    if regex:
+        sub = f"({sub})"  # Enclose regex with paranthesis to make it a group capture
+        if mustcontain:
+            assert bool(re.search(sub, s)) is True
+        # If an invalid regex is passed, we let re.error throw - it can be handled by the caller
+        if backward:
+            split = re.split(sub, s, 1, flags=re.REVERSE)
+            return split[0]
+        else:
+            split = re.split(sub, s, 1)
+            return split[-1]
     else:
-        prefix, found, suffix = s.partition(sub)
-    if not found:
-        suffix = prefix
-    return suffix
+        if lengthwarning and len(sub) > len(s):
+            warnings.warn(f"Call to readaftersubstring(sub={sub}, str={s}): substring is longer than string",
+                          SyntaxWarning)
+        if mustcontain:
+            assert sub in s
+        if backward:
+            prefix, found, suffix = s.rpartition(sub)
+        else:
+            prefix, found, suffix = s.partition(sub)
+        if found:
+            return suffix
+        else:
+            return s
 
 
-def readbeforesubstring(sub: str, s: str, backwards=False, mustcontain=True, lengthwarning=True) -> str:
+def readbeforesubstring(sub: str, s: str, backward=False, regex=False, mustcontain=True, lengthwarning=True) -> str:
     # Done
     """
-    Todo: Regex Support, Update Docs
     This function is based off of
     https://stackoverflow.com/questions/12572362/how-to-get-a-string-after-a-specific-substring/57064170#57064170
 
@@ -116,18 +134,38 @@ def readbeforesubstring(sub: str, s: str, backwards=False, mustcontain=True, len
     Return:
         the partition of the string that comes before the delimiter
     """
-    if lengthwarning and len(sub) > len(s):
-        warnings.warn(f"Call to readbeforesubstring(sub={sub}, str={s}): substring is longer than string",
-                      SyntaxWarning)
-    if mustcontain:
-        assert sub in s
-    if backwards:
-        prefix, found, suffix = s.rpartition(sub)
+    # If re isn't imported at all, that will show later.
+    # Since we only catch AttributeError, we don't have to worry about it here.
+    try:
+        re.REVERSE
+    except AttributeError:
+        raise ImportError("Wrong regex module: Expected regex module, got re module. To fix this, replace \"import "
+                          "re\" with \"import regex as re\"")
+    if regex:
+        sub = f"({sub})"  # Enclose regex with paranthesis to make it a group capture
+        if mustcontain:
+            assert bool(re.search(sub, s)) is True
+        # If an invalid regex is passed, we let re.error throw - it can be handled by the caller
+        if backward:
+            split = re.split(sub, s, 1, flags=re.REVERSE)
+            return split[-1]
+        else:
+            split = re.split(sub, s, 1)
+            return split[0]
     else:
-        prefix, found, suffix = s.partition(sub)
-    if not found:
-        prefix = suffix
-    return prefix
+        if lengthwarning and len(sub) > len(s):
+            warnings.warn(f"Call to readaftersubstring(sub={sub}, str={s}): substring is longer than string",
+                          SyntaxWarning)
+        if mustcontain:
+            assert sub in s
+        if backward:
+            prefix, found, suffix = s.rpartition(sub)
+        else:
+            prefix, found, suffix = s.partition(sub)
+        if found:
+            return prefix
+        else:
+            return s
 
 
 def removesubstring(sub: str, s: str) -> str:
@@ -514,7 +552,7 @@ def datatype_getbase(datatype: str) -> str:
 
 
 def dumpcs_isvalid(dumpcs: str) -> bool:
-    #Not done
+    # Not done
     """
     Bad detection, needs proper algorithm
 
@@ -538,7 +576,7 @@ def dumpcs_isvalid(dumpcs: str) -> bool:
 
 
 def dumpcs_checkformat(dumpcs: str) -> list[dict]:
-    #Not done
+    # Not Done
     """
     Scan dump.cs for unexpected formatting
     Returns list of unexpected formatting errors
@@ -636,12 +674,12 @@ def dumpcs_removeattributes(dumpcs: str) -> str:
     lines = getlines(dumpcs, False, False)
     newlines = []
     for line in lines:
-        #Trim leading whitespace from line
+        # Trim leading whitespace from line
         trimmedline = trim(line, True, False)
         # If the first non-whitespace character on the line is a square bracket,
         # this means the line is an attribute
         if trimmedline == "" or trimmedline[0] != "[":
-            #The line is not an attribute line, so keep it
+            # The line is not an attribute line, so keep it
             newlines.append(line)
     return linestostring(newlines, False, False)
 
@@ -810,7 +848,7 @@ def dumpcsobject_getname(rawobject: str, includenesting=False) -> str:
         # If the object is not inherited, read before the typedefindex
         prefix = readbeforesubstring(" //", objectdeclarationline)
     if dumpcsobject_isgeneric(rawobject):
-        #EX: We want Lookup.Grouping, not Lookup.Grouping<TKey, TElement>
+        # EX: We want Lookup.Grouping, not Lookup.Grouping<TKey, TElement>
         TEMPREPLACEMENT = "***TEMPREPLACEMENT***"  # Should be a constant!
         TEMPREPLACEMENT2 = "***TEMPREPLACEMENTNUMBER2***"  # Should be a constant!
         assert TEMPREPLACEMENT not in prefix
@@ -868,7 +906,7 @@ def dumpcsobject_getbase(rawobject: str) -> Optional[str]:
     suffix = readaftersubstring(" : ", objectdeclarationline)
     prefix = readbeforesubstring(" //", suffix)
     if dumpcsobject_isgenericbase(rawobject):
-        #EX: We want Lookup.Grouping, not Lookup.Grouping<TKey, TElement>
+        # EX: We want Lookup.Grouping, not Lookup.Grouping<TKey, TElement>
         TEMPREPLACEMENT = "***TEMPREPLACEMENT***"  # Should be a constant!
         assert TEMPREPLACEMENT not in suffix
         tempreplaced = suffix.replace("<>", TEMPREPLACEMENT)
@@ -960,7 +998,7 @@ def dumpcsobject_getgenericdatatype(rawobject: str) -> Optional[str]:
     assert TEMPREPLACEMENT not in prefix
     tempreplaced = prefix.replace("<>", TEMPREPLACEMENT)
     suffix = readaftersubstring("<", tempreplaced)
-    prefix = readbeforesubstring(">", suffix, backwards=True)
+    prefix = readbeforesubstring(">", suffix, backward=True)
     genericdatatype = prefix.replace(TEMPREPLACEMENT,"<>")
     return genericdatatype
 
@@ -1086,7 +1124,7 @@ def dumpcsobject_getmethods(rawobject: str) -> list[dict]:
             found = True
             break
     if not found:
-        methodssection = readbeforesubstring("\n}", suffix, backwards=True)
+        methodssection = readbeforesubstring("\n}", suffix, backward=True)
     methoddelimiter = "\n\n"
     # Split methodssection by "\n\n", which can be used to mark the start of each method
     rawmethods = methodssection.split(methoddelimiter)
@@ -1102,10 +1140,7 @@ def dumpcsobject_getmethods(rawobject: str) -> list[dict]:
         isstaticconstructor = dumpcsobject_method_isstaticconstructor(rawmethod)
         isoperator = dumpcsobject_method_isoperator(rawmethod)
         isupdate = dumpcsobject_method_isupdate(rawmethod)
-        if isupdate:
-            updatetype = dumpcsobject_method_getupdatetype(rawmethod)
-        else:
-            updatetype = None
+        updatetype = dumpcsobject_method_getupdatetype(rawmethod) if isupdate else None
         if isconstructor or isstaticconstructor:
             name = dumpcsobject_getname(rawobject, includenesting=False)
         else:
@@ -1116,21 +1151,11 @@ def dumpcsobject_getmethods(rawobject: str) -> list[dict]:
         isoverride = dumpcsobject_method_isoverride(rawmethod)
         isvirtual = dumpcsobject_method_isvirtual(rawmethod)
         hasslot = dumpcsobject_method_hasslot(rawmethod)
-        if hasslot:
-            slot = dumpcsobject_method_getslot(rawmethod)
-        else:
-            slot = None
+        slot = dumpcsobject_method_getslot(rawmethod) if hasslot else None
         isgeneric = dumpcsobject_method_isgeneric(rawmethod)
-        if isgeneric:
-            generics = dumpcsobject_method_getgenerics(rawmethod)
-        else:
-            #generics = None
-            generics = []
+        generics = dumpcsobject_method_getgenerics(rawmethod) if isgeneric else []
         hasgenericdatatype = dumpcsobject_method_hasgenericdatatype(rawmethod)
-        if hasgenericdatatype:
-            genericdatatype = dumpcsobject_method_getgenericdatatype(rawmethod)
-        else:
-            genericdatatype = None
+        genericdatatype = dumpcsobject_method_getgenericdatatype(rawmethod) if hasgenericdatatype else None
         hasoffsetdata = dumpcsobject_method_hasoffsetdata(rawmethod) # Offset -1 if not
         if hasoffsetdata:
             relativevirtualaddress = dumpcsobject_method_getrelativevirtualaddress(rawmethod) #RVA
@@ -1184,7 +1209,7 @@ def dumpcsobject_method_getname(rawmethod: str) -> str:
         assert "<" in lastword
         prefix = readbeforesubstring("<", lastword)
         assert ">" in lastword
-        suffix = readaftersubstring(">", lastword, backwards=True)
+        suffix = readaftersubstring(">", lastword, backward=True)
         name = prefix + suffix
     else:
         name = lastword
@@ -1264,7 +1289,7 @@ def dumpcsobject_method_getgenericdatatype(rawmethod: str) -> Optional[str]:
     # The name of the method is the last word before the delimiter in the methoddeclarationline
     name = words[-1]
     suffix = readaftersubstring("<", name)
-    generictype = readbeforesubstring(">", suffix, backwards=True)
+    generictype = readbeforesubstring(">", suffix, backward=True)
     return generictype
 
 
@@ -1324,10 +1349,11 @@ def dumpcsobject_method_getslot(rawmethod: str) -> Optional[str]:
     offsetdataline = lines[0]
     offsetdataline = offsetdataline.strip()
     suffix = readaftersubstring("Slot: ", offsetdataline)
-    if " " in suffix:
-        slot = readbeforesubstring(" ", suffix)
-    else:
-        slot = suffix
+    # if " " in suffix:
+    #     slot = readbeforesubstring(" ", suffix)
+    # else:
+    #     slot = suffix
+    slot = readbeforesubstring(" ", suffix, mustcontain=False)
     return slot
 
 def dumpcsobject_method_isgeneric(rawmethod: str) -> bool:
@@ -1360,10 +1386,11 @@ def dumpcsobject_method_getrelativevirtualaddress(rawmethod: str) -> Optional[st
     offsetdataline = lines[0]
     offsetdataline = offsetdataline.strip()
     suffix = readaftersubstring("RVA: ", offsetdataline)
-    if " " in suffix:
-        relativevirtualaddress = readbeforesubstring(" ", suffix)
-    else:
-        relativevirtualaddress = suffix
+    # if " " in suffix:
+    #     relativevirtualaddress = readbeforesubstring(" ", suffix)
+    # else:
+    #     relativevirtualaddress = suffix
+    relativevirtualaddress = readbeforesubstring(" ", suffix, mustcontain=False)
     return relativevirtualaddress
 
 
@@ -1375,10 +1402,11 @@ def dumpcsobject_method_getoffset(rawmethod: str) -> Optional[str]:
     offsetdataline = lines[0]
     offsetdataline = offsetdataline.strip()
     suffix = readaftersubstring("Offset: ", offsetdataline)
-    if " " in suffix:
-        offset = readbeforesubstring(" ", suffix)
-    else:
-        offset = suffix
+    # if " " in suffix:
+    #     offset = readbeforesubstring(" ", suffix)
+    # else:
+    #     offset = suffix
+    offset = readbeforesubstring(" ", suffix, mustcontain=False)
     return offset
 
 
@@ -1390,10 +1418,11 @@ def dumpcsobject_method_getvirtualaddress(rawmethod: str) -> Optional[str]:
     offsetdataline = lines[0]
     offsetdataline = offsetdataline.strip()
     suffix = readaftersubstring("VA: ", offsetdataline)
-    if " " in suffix:
-        virtualaddress = readbeforesubstring(" ", suffix)
-    else:
-        virtualaddress = suffix
+    # if " " in suffix:
+    #     virtualaddress = readbeforesubstring(" ", suffix)
+    # else:
+    #     virtualaddress = suffix
+    virtualaddress = readbeforesubstring(" ", suffix, mustcontain=False)
     return virtualaddress
 
 
@@ -1479,10 +1508,11 @@ def dumpcsobject_method_generic_getrelativevirtualaddress(rawgeneric: str) -> Op
     offsetdataline = lines[0]
     offsetdataline = readaftersubstring("\t|-", offsetdataline).strip()
     suffix = readaftersubstring("RVA: ", offsetdataline)
-    if " " in suffix:
-        relativevirtualaddress = readbeforesubstring(" ", suffix)
-    else:
-        relativevirtualaddress = suffix
+    # if " " in suffix:
+    #     relativevirtualaddress = readbeforesubstring(" ", suffix)
+    # else:
+    #     relativevirtualaddress = suffix
+    relativevirtualaddress = readbeforesubstring(" ", suffix, mustcontain=False)
     return relativevirtualaddress
 
 
@@ -1494,10 +1524,11 @@ def dumpcsobject_method_generic_getoffset(rawgeneric: str) -> Optional[str]:
     offsetdataline = lines[0]
     offsetdataline = readaftersubstring("\t|-", offsetdataline).strip()
     suffix = readaftersubstring("Offset: ", offsetdataline)
-    if " " in suffix:
-        offset = readbeforesubstring(" ", suffix)
-    else:
-        offset = suffix
+    # if " " in suffix:
+    #     offset = readbeforesubstring(" ", suffix)
+    # else:
+    #     offset = suffix
+    offset = readbeforesubstring(" ", suffix, mustcontain=False)
     return offset
 
 
@@ -1509,10 +1540,11 @@ def dumpcsobject_method_generic_getvirtualaddress(rawgeneric: str) -> Optional[s
     offsetdataline = lines[0]
     offsetdataline = readaftersubstring("\t|-", offsetdataline).strip()
     suffix = readaftersubstring("VA: ", offsetdataline)
-    if " " in suffix:
-        virtualaddress = readbeforesubstring(" ", suffix)
-    else:
-        virtualaddress = suffix
+    # if " " in suffix:
+    #     virtualaddress = readbeforesubstring(" ", suffix)
+    # else:
+    #     virtualaddress = suffix
+    virtualaddress = readbeforesubstring(" ", suffix, mustcontain=False)
     return virtualaddress
 
 def dumpcsobject_method_generic_gettypes(rawgeneric: str) -> list[dict]:
@@ -1533,10 +1565,7 @@ def dumpcsobject_method_generic_gettypes(rawgeneric: str) -> list[dict]:
     types = []
     for fulltype in typedatalines:
         hasname = dumpcsobject_method_generic_type_hasname(fulltype)
-        if hasname:
-            name = dumpcsobject_method_generic_type_getname(fulltype)
-        else:
-            name = None
+        name = dumpcsobject_method_generic_type_getname(fulltype) if hasname else None
         datatype = dumpcsobject_method_generic_type_getdatatype(fulltype)
         # Type is capitalized because "type" is a keyword
         Type = {
@@ -1558,7 +1587,7 @@ def dumpcsobject_method_generic_type_getdatatype(fulltype: str) -> str:
     assert TEMPREPLACEMENT not in typedata
     tempreplaced = typedata.replace("<>", TEMPREPLACEMENT)
     suffix = readaftersubstring("<", tempreplaced)
-    prefix = readbeforesubstring(">", suffix, backwards=True)
+    prefix = readbeforesubstring(">", suffix, backward=True)
     datatype = prefix.replace(TEMPREPLACEMENT, "<>")
     return datatype
 
@@ -1582,7 +1611,7 @@ def dumpcsobject_method_generic_type_getname(fulltype: str) -> str:
     assert TEMPREPLACEMENT not in typedata
     tempreplaced = typedata.replace("<>", TEMPREPLACEMENT)
     prefix = readbeforesubstring("<", tempreplaced)
-    suffix = readaftersubstring(">", tempreplaced, backwards=True)
+    suffix = readaftersubstring(">", tempreplaced, backward=True)
     typename = (prefix + suffix).replace(TEMPREPLACEMENT, "<>")
     return typename
 
@@ -1605,7 +1634,7 @@ def dumpcsobject_method_getparams(rawmethod: str) -> list[dict]:
     methoddeclarationline = lines[1]
     methoddeclarationline = methoddeclarationline.strip()
     suffix = readaftersubstring("(", methoddeclarationline)
-    paramssection = readbeforesubstring(")", suffix, backwards=True)
+    paramssection = readbeforesubstring(")", suffix, backward=True)
     # Split paramssection by ", ", which can be used to mark the start of each param
     # Make sure not to split by ", " in data types (such as Dict<string, int>)
     # or in strings (such as string seperator ",")
@@ -1647,22 +1676,13 @@ def dumpcsobject_method_getparams(rawmethod: str) -> list[dict]:
     params = []
     for rawparam in rawparams:
         hasname = dumpcsobject_method_param_hasname(rawparam)
-        if hasname:
-            name = dumpcsobject_method_param_getname(rawparam)
-        else:
-            name = None
+        name = dumpcsobject_method_param_getname(rawparam) if hasname else None
         datatype = dumpcsobject_method_param_getdatatype(rawparam)
         basedatatype = datatype_getbase(datatype)
         hasgenericdatatype = dumpcsobject_method_param_hasgenericdatatype(rawparam)
-        if hasgenericdatatype:
-            genericdatatype = dumpcsobject_method_param_getgenericdatatype(rawparam)
-        else:
-            genericdatatype = None
+        genericdatatype = dumpcsobject_method_param_getgenericdatatype(rawparam) if hasgenericdatatype else None
         hasdefault = dumpcsobject_method_param_hasdefault(rawparam)
-        if hasdefault:
-            default = dumpcsobject_method_param_getdefault(rawparam)
-        else:
-            default = None
+        default = dumpcsobject_method_param_getdefault(rawparam) if hasdefault else None
         param = {
             "raw": rawparam,
             "hasname": hasname,
@@ -1707,7 +1727,7 @@ def dumpcsobject_method_param_getname(rawparam: str) -> str:
         assert "<" in lastword
         prefix = readbeforesubstring("<", lastword)
         assert ">" in lastword
-        suffix = readaftersubstring(">", lastword, backwards=True)
+        suffix = readaftersubstring(">", lastword, backward=True)
         name = prefix + suffix
     else:
         name = lastword
@@ -1736,7 +1756,7 @@ def dumpcsobject_method_param_getgenericdatatype(rawparam: str) -> str:
     words = getwords(rawparam)
     lastword = words[-1]
     suffix = readaftersubstring("<", lastword)
-    generictype = readbeforesubstring(">", suffix, backwards=True)
+    generictype = readbeforesubstring(">", suffix, backward=True)
     return generictype
 
 
@@ -1830,7 +1850,7 @@ def dumpcsobject_getfields(rawobject: str) -> list[dict]:
             found = True
             break
     if not found:
-        fieldssection = readbeforesubstring("\n}", suffix, backwards=True)
+        fieldssection = readbeforesubstring("\n}", suffix, backward=True)
     fielddelimiter = "\n"
     # Split fields by "\n", which can be used to mark the start of each field
     rawfields = fieldssection.split(fielddelimiter)
@@ -1847,20 +1867,11 @@ def dumpcsobject_getfields(rawobject: str) -> list[dict]:
         basedatatype = datatype_getbase(datatype)
         isdynamic = dumpcsobject_field_isdynamic(rawfield)
         hasgenericdatatype = dumpcsobject_field_hasgenericdatatype(rawfield)
-        if hasgenericdatatype:
-            genericdatatype = dumpcsobject_field_getgenericdatatype(rawfield)
-        else:
-            genericdatatype = None
+        genericdatatype = dumpcsobject_field_getgenericdatatype(rawfield) if hasgenericdatatype else None
         hasoffset = dumpcsobject_field_hasoffset(rawfield)
-        if hasoffset:
-            offset = dumpcsobject_field_getoffset(rawfield) #Offset
-        else:
-            offset = None
+        offset = dumpcsobject_field_getoffset(rawfield) if hasoffset else None
         hasdefault = dumpcsobject_field_hasdefault(rawfield)
-        if hasdefault:
-            default = dumpcsobject_field_getdefault(rawfield)
-        else:
-            default = None
+        default = dumpcsobject_field_getdefault(rawfield) if hasdefault else None
         field = {
             "raw": rawfield,
             "name": name,
@@ -1892,7 +1903,7 @@ def dumpcsobject_field_getname(rawfield: str) -> str:
         assert "<" in lastword
         prefix = readbeforesubstring("<", lastword)
         assert ">" in lastword
-        suffix = readaftersubstring(">", lastword, backwards=True)
+        suffix = readaftersubstring(">", lastword, backward=True)
         name = prefix + suffix
     else:
         name = lastword
@@ -1926,7 +1937,7 @@ def dumpcsobject_field_getgenericdatatype(rawfield: str) -> str:
     # The name of the field is the last word before the delimiter in the rawfield
     name = words[-1]
     suffix = readaftersubstring("<", name)
-    generictype = readbeforesubstring(">", suffix, backwards=True)
+    generictype = readbeforesubstring(">", suffix, backward=True)
     return generictype
 
 
@@ -1957,7 +1968,7 @@ def dumpcsobject_field_isdynamic(rawfield: str) -> bool:
 def dumpcsobject_field_hasoffset(rawfield: str) -> bool:
     # Not Done
     fielddeclarationline = rawfield.strip()
-    suffix = readaftersubstring(";", fielddeclarationline, backwards=True)
+    suffix = readaftersubstring(";", fielddeclarationline, backward=True)
     return "// " in suffix
 
 
@@ -1967,7 +1978,7 @@ def dumpcsobject_field_getoffset(rawfield: str) -> str:
         # No offset
         return None
     fielddeclarationline = rawfield.strip()
-    suffix = readaftersubstring(";", fielddeclarationline, backwards=True)
+    suffix = readaftersubstring(";", fielddeclarationline, backward=True)
     offset = readaftersubstring("// ", suffix)
     return offset
 
@@ -1985,7 +1996,7 @@ def dumpcsobject_field_getdefault(rawfield: str) -> str:
         # No default
         return None
     fielddeclarationline = rawfield.strip()
-    prefix = readbeforesubstring(";", fielddeclarationline, backwards=True)
+    prefix = readbeforesubstring(";", fielddeclarationline, backward=True)
     assert " = " in prefix
     # the " = " always comes before the default value,
     # so we do not have to worry if the default value is a string containing " = "
@@ -2019,7 +2030,7 @@ def dumpcsobject_getproperties(rawobject: str) -> list[dict]:
             found = True
             break
     if not found:
-        propertiessection = readbeforesubstring("\n}", suffix, backwards=True)
+        propertiessection = readbeforesubstring("\n}", suffix, backward=True)
     propertydelimiter = "\n"
     # Split properties by "\n", which can be used to mark the start of each property
     rawpropertyies = propertiessection.split(propertydelimiter)
@@ -2030,22 +2041,19 @@ def dumpcsobject_getproperties(rawobject: str) -> list[dict]:
     del rawpropertyies[0]
     # Build dictionary of properties from raw properties
     properties = []
-    for rawpropertyy in rawpropertyies:
-        name = dumpcsobject_property_getname(rawpropertyy)
-        datatype = dumpcsobject_property_getdatatype(rawpropertyy)
+    for rawproperty in rawpropertyies:
+        name = dumpcsobject_property_getname(rawproperty)
+        datatype = dumpcsobject_property_getdatatype(rawproperty)
         basedatatype = datatype_getbase(datatype)
-        isoverride = dumpcsobject_property_isoverride(rawpropertyy)
-        isvirtual = dumpcsobject_property_isvirtual(rawpropertyy)
-        hasgenericdatatype = dumpcsobject_property_hasgenericdatatype(rawpropertyy)
-        if hasgenericdatatype:
-            genericdatatype = dumpcsobject_property_getgenericdatatype(rawpropertyy)
-        else:
-            genericdatatype = None
-        hasgetter = dumpcsobject_property_hasgetter(rawpropertyy)
-        hassetter = dumpcsobject_property_hassetter(rawpropertyy)
+        isoverride = dumpcsobject_property_isoverride(rawproperty)
+        isvirtual = dumpcsobject_property_isvirtual(rawproperty)
+        hasgenericdatatype = dumpcsobject_property_hasgenericdatatype(rawproperty)
+        genericdatatype = dumpcsobject_property_getgenericdatatype(rawproperty) if hasgenericdatatype else None
+        hasgetter = dumpcsobject_property_hasgetter(rawproperty)
+        hassetter = dumpcsobject_property_hassetter(rawproperty)
         # The name Property is capitalized because property" is a keyword in python
         Property = {
-            "raw": rawpropertyy,
+            "raw": rawproperty,
             "name": name,
             "datatype": datatype,
             "basedatatype": basedatatype,
@@ -2060,53 +2068,53 @@ def dumpcsobject_getproperties(rawobject: str) -> list[dict]:
     return properties
 
 
-def dumpcsobject_property_getname(rawpropertyy: str) -> str:
+def dumpcsobject_property_getname(rawproperty: str) -> str:
     # Not Done
-    propertydeclarationline = rawpropertyy.strip()
+    propertydeclarationline = rawproperty.strip()
     prefix = readbeforesubstring(" {", propertydeclarationline)
     words = getwords(prefix)
     assert len(words) > 1
-    # The name of the property is the last word before the delimiter in the rawpropertyy
+    # The name of the property is the last word before the delimiter in the rawproperty
     lastword = words[-1]
-    if dumpcsobject_property_hasgenericdatatype(rawpropertyy):
+    if dumpcsobject_property_hasgenericdatatype(rawproperty):
         assert "<" in lastword
         prefix = readbeforesubstring("<", lastword)
         assert ">" in lastword
-        suffix = readaftersubstring(">", lastword, backwards=True)
+        suffix = readaftersubstring(">", lastword, backward=True)
         name = prefix + suffix
     else:
         name = lastword
     return name
 
 
-def dumpcsobject_property_hasgenericdatatype(rawpropertyy: str) -> str:
+def dumpcsobject_property_hasgenericdatatype(rawproperty: str) -> str:
     # Not Done
-    propertydeclarationline = rawpropertyy.strip()
+    propertydeclarationline = rawproperty.strip()
     prefix = readbeforesubstring(" {", propertydeclarationline)
     words = getwords(prefix)
     assert len(words) > 1
     return "<" in words[-1]
 
-def dumpcsobject_property_getgenericdatatype(rawpropertyy: str) -> str:
+def dumpcsobject_property_getgenericdatatype(rawproperty: str) -> str:
     # Not Done
-    if not dumpcsobject_property_hasgenericdatatype(rawpropertyy):
+    if not dumpcsobject_property_hasgenericdatatype(rawproperty):
         # No generic type
         return None
-    propertydeclarationline = rawpropertyy.strip()
+    propertydeclarationline = rawproperty.strip()
     prefix = readbeforesubstring(" {", propertydeclarationline)
     words = getwords(prefix)
     assert len(words) > 1
-    # The name of the property is the last word before the delimiter in the rawpropertyy
+    # The name of the property is the last word before the delimiter in the rawproperty
     lastword = words[-1]
     suffix = readaftersubstring("<", lastword)
-    generictype = readbeforesubstring(">", suffix, backwards=True)
+    generictype = readbeforesubstring(">", suffix, backward=True)
     return generictype
 
 
 @lru_cache(maxsize=1, typed=True)
-def dumpcsobject_property_getdatatype(rawpropertyy: str) -> str:
+def dumpcsobject_property_getdatatype(rawproperty: str) -> str:
     # Not Done
-    propertydeclarationline = rawpropertyy.strip()
+    propertydeclarationline = rawproperty.strip()
     prefix = readbeforesubstring(" {", propertydeclarationline)
     # The data type is everything but the last word (which is the property name)
     words = getwords(prefix)
@@ -2117,26 +2125,26 @@ def dumpcsobject_property_getdatatype(rawpropertyy: str) -> str:
     return datatype
 
 
-def dumpcsobject_property_isvirtual(rawpropertyy: str) -> bool:
+def dumpcsobject_property_isvirtual(rawproperty: str) -> bool:
     # Not Done
-    datatype = dumpcsobject_property_getdatatype(rawpropertyy)
+    datatype = dumpcsobject_property_getdatatype(rawproperty)
     words = getwords(datatype)
     assert words
     return "virtual" in words
 
 
-def dumpcsobject_property_isoverride(rawpropertyy: str) -> bool:
+def dumpcsobject_property_isoverride(rawproperty: str) -> bool:
     # Not Done
-    datatype = dumpcsobject_property_getdatatype(rawpropertyy)
+    datatype = dumpcsobject_property_getdatatype(rawproperty)
     words = getwords(datatype)
     assert words
     return "override" in words
 
 
-def dumpcsobject_property_getpropertymethods(rawpropertyy: str) -> str:
-    propertydeclarationline = rawpropertyy.strip()
+def dumpcsobject_property_getpropertymethods(rawproperty: str) -> str:
+    propertydeclarationline = rawproperty.strip()
     suffix = readaftersubstring(" { ", propertydeclarationline)
-    propertymethodssection = readbeforesubstring(" }", suffix, backwards=True)
+    propertymethodssection = readbeforesubstring(" }", suffix, backward=True)
     propertymethods = [propertymethod.strip() for propertymethod in propertymethodssection.split(";")]
     # The split function will capture everything after the last property
     # since we split by the delimiter that ends properties,
@@ -2145,14 +2153,14 @@ def dumpcsobject_property_getpropertymethods(rawpropertyy: str) -> str:
     return propertymethods
 
 
-def dumpcsobject_property_hasgetter(rawpropertyy: str) -> bool:
+def dumpcsobject_property_hasgetter(rawproperty: str) -> bool:
     # Not Done
-    propertymethods = dumpcsobject_property_getpropertymethods(rawpropertyy)
+    propertymethods = dumpcsobject_property_getpropertymethods(rawproperty)
     return "get" in propertymethods
 
-def dumpcsobject_property_hassetter(rawpropertyy: str) -> bool:
+def dumpcsobject_property_hassetter(rawproperty: str) -> bool:
     # Not Done
-    propertymethods = dumpcsobject_property_getpropertymethods(rawpropertyy)
+    propertymethods = dumpcsobject_property_getpropertymethods(rawproperty)
     return "set" in propertymethods
 
 
@@ -2163,7 +2171,7 @@ def dumpcs_getobjects(dumpcs: str,
                       makeobjectpaths=False,
                       getmethodhex=True,
                       libfilepath=None) -> list[dict]:
-    #Not Done
+    # Not Done
     """
     Docs Not Done!
     Possible Improvements:
@@ -2230,61 +2238,38 @@ def dumpcs_getobjects(dumpcs: str,
     for rawobject in rawobjects:
         # Add "// Namespace: " back on, as string.split excludes the delimiter
         rawobject = objectdelimiter + rawobject
+
         hasnamespace = dumpcsobject_hasnamespace(rawobject)
-        if hasnamespace:
-            namespace = dumpcsobject_getnamespace(rawobject)
-        else:
-            namespace = None
-        if namespacefilter and not(namespace in namespacefilter):
+        namespace = dumpcsobject_getnamespace(rawobject) if hasnamespace else None
+        if namespacefilter and namespace not in namespacefilter:
             continue
-        # The name objecttype is used because "type" is a keyword
+
         objecttype = dumpcsobject_gettype(rawobject)
-        if objecttypefilter and not (objecttype in objecttypefilter):
+        if objecttypefilter and objecttype not in objecttypefilter:
             continue
+
         isinherited = dumpcsobject_isinherited(rawobject)
         name = dumpcsobject_getname(rawobject, includenesting=False)
         isnested = dumpcsobject_isnested(rawobject)
         nesting = dumpcsobject_getnesting(rawobject, includename=False, innertoouter=True)
         datatype = dumpcsobject_getdatatype(rawobject)
-        if isinherited:
-            base = dumpcsobject_getbase(rawobject)
-        else:
-            base = None
+        base = dumpcsobject_getbase(rawobject) if isinherited else None
         isgeneric = dumpcsobject_isgeneric(rawobject)
-        if isgeneric:
-            genericdatatype = dumpcsobject_getgenericdatatype(rawobject)
-        else:
-            genericdatatype = None
-        # If a generic object is inherited from a base object that is also generic,
-        # the base class's generic data type will always be the same as
-        # the derived object's generic data type. So, there is no need to find / process
-        # the base class's generic data type.
+        genericdatatype = dumpcsobject_getgenericdatatype(rawobject) if isgeneric else None
         typedefindex = dumpcsobject_gettypedefindex(rawobject)
+
         hasmethods = dumpcsobject_hasmethods(rawobject)
-        if hasmethods:
-            methods = dumpcsobject_getmethods(rawobject)
-            hasconstructor = dumpcsobject_hasconstructor(rawobject)
-            hasstaticconstructor = dumpcsobject_hasstaticconstructor(rawobject)
-            updatetypes = dumpcsobject_getupdatetypes(rawobject)
-        else:
-            #methods = None
-            methods = []
-            hasconstructor = False
-            hasstaticconstructor = False
-            updatetypes = []
+        methods = dumpcsobject_getmethods(rawobject) if hasmethods else []
+        hasconstructor = dumpcsobject_hasconstructor(rawobject) if hasmethods else False
+        hasstaticconstructor = dumpcsobject_hasstaticconstructor(rawobject) if hasmethods else False
+        updatetypes = dumpcsobject_getupdatetypes(rawobject) if hasmethods else []
+
         hasfields = dumpcsobject_hasfields(rawobject)
-        if hasfields:
-            fields = dumpcsobject_getfields(rawobject)
-        else:
-            # fields = None
-            fields = []
+        fields = dumpcsobject_getfields(rawobject) if hasfields else []
         hasproperties = dumpcsobject_hasproperties(rawobject)
-        if hasproperties:
-            properties = dumpcsobject_getproperties(rawobject)
-        else:
-            # properties = None
-            properties = []
-        #The name Object is capitalized because "object" is a keyword
+        properties = dumpcsobject_getproperties(rawobject) if hasproperties else []
+
+        # The name Object is capitalized because "object" is a keyword
         Object = {
             "raw": rawobject,
             "name": name,
@@ -2320,7 +2305,7 @@ def dumpcs_getobjects(dumpcs: str,
 
 
 def dumpcs_getimages(dumpcs: str) -> list[dict]:
-    #Not Done
+    # Not Done
     """
     Docs Not Done!
     Possible Improvements:
