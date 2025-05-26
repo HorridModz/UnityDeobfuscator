@@ -1,14 +1,14 @@
 from __future__ import annotations
 import io
 import os
-from typing import TextIO
+from typing import TextIO, Any, Optional, Callable
 
 
 class FileEncodingException(Exception):
     pass
 
 
-class FileHandler():
+class FileHandler:
     def __init__(self, encodings: tuple = ('utf-8', 'utf-16', 'utf-32')):
         self.encodings = encodings
         self.file_handles = {}
@@ -61,10 +61,10 @@ class FileHandler():
             with self.open_file(path, 'r', encoding) as f:
                 return f.read()
 
-    def read_bytes(self, path: str | os.PathLike, hex=True, hexformat: Optional[Callable] = None) -> \
-            bytes | str:
+    def read_bytes(self, path: str | os.PathLike, tohex=True, hexformat: Optional[Callable] = None) -> \
+            bytes | hex | Any:
         filecontent = self.read_file(path, binary=True)
-        if hex:
+        if tohex:
             if hexformat:
                 return hexformat(filecontent.hex())
             else:
@@ -77,7 +77,3 @@ class FileHandler():
         with self.open_file(path, encoding, binary) as f:
             f.write(data)
             return f
-
-
-f = FileHandler()
-print(f.read_file(r"C:\Users\zachy\Downloads\Configuration.lua"))

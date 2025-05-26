@@ -7,6 +7,7 @@ TODO: Make is standard method detection for methods (Equals, etc.)
 
 TODO: Make is unity type detection
 
+TODO: Replace all terminology with terminology from tools like Il2cppDumper, to make sure it is correct
 """
 
 from __future__ import annotations
@@ -20,13 +21,10 @@ import regex as re
 import json
 from functools import cache, lru_cache
 from typing import Any
+# FIXME: Make this a package and make it use relative imports
 from unitydeobfuscatorexceptions import *
 import fileutils
 
-try:
-    fileutils.FileHandler
-except AttributeError:
-    raise ImportError("Wrong fileutils module (expected built-in unitydeobfuscator fileutils module")
 filehandler = fileutils.FileHandler()
 
 
@@ -73,7 +71,7 @@ def readafter(sub: str, s: str, backward=False, regex=False, mustcontain=True, l
             assert bool(re.search(sub, s)) is True
         # If an invalid regex is passed, we let re.error throw - it can be handled by the caller
         if backward:
-            split = re.split(sub, s, 1, flags=re.REVERSE)
+            split = re.split(sub, s, 1, )
             return split[0]
         else:
             split = re.split(sub, s, 1)
@@ -310,6 +308,7 @@ def linestostring(lines: list[str],
     # This function is exactly the same as wordstostring, except it operates on lines and
     # "\n" is the default concatenator. So, it's best to reuse the wordstostring function here.
     return wordstostring(lines, totrimlines, toignoreblanklines, concatenator)
+
 
 @cache
 def datatype_isreference(datatype: str) -> bool:
@@ -757,7 +756,7 @@ def dumpcsobject_getbases(rawobject: str) -> list[str]:
     return bases
 
 @cache
-def dumpcsobject_base_getname(rawbase: str) -> bool:
+def dumpcsobject_base_getname(rawbase: str) -> str:
     if dumpcsobject_base_isgeneric(rawbase):
         # Match generics, but not compiler generated symbols
         # EX: IEnumerator<object>, but not TweenRunner.<Start>
@@ -1568,7 +1567,7 @@ def dumpcsobject_method_generic_type_hasname(fulltype: str) -> bool:
 
 
 @cache
-def dumpcsobject_method_generic_type_getname(fulltype: str) -> str:
+def dumpcsobject_method_generic_type_getname(fulltype: str) -> Optional[str]:
     # Not Done
     if not dumpcsobject_method_generic_type_hasname(fulltype):
         # No name
@@ -1671,7 +1670,7 @@ def dumpcsobject_method_param_hasname(rawparam: str) -> bool:
 
 
 @cache
-def dumpcsobject_method_param_getname(rawparam: str) -> str:
+def dumpcsobject_method_param_getname(rawparam: str) -> Optional[str]:
     # Not Done
     if not dumpcsobject_method_param_hasname(rawparam):
         # No Name
