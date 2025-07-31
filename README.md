@@ -2,3 +2,5 @@
 **DO NOT TRY TO USE**
 
 A python tool for deobfuscating Unity games.
+
+Disclaimer: THIS REPOSITORY IS FOR EDUCATIONAL PURPOSES. I AM NOT LIABLE FOR ANY MISUSE.
